@@ -1,0 +1,27 @@
+# Directorios de build de Code::Blocks
+/bin/
+/obj/
+/.objs/
+
+# Archivos específicos de Code::Blocks
+*.cbp
+*.depend
+*.layout
+*.workspace
+
+# Archivos ejecutables
+*.exe
+*.app
+*.out
+
+# Archivos objeto y dependencias
+*.o
+*.obj
+*.a
+*.lib
+*.dll
+*.so
+
+# Archivos de backup
+*~
+*.bak
