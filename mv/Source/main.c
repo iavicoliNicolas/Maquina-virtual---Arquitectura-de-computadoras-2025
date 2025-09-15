@@ -28,6 +28,8 @@ int main(int argc, char *argv[]) {
     leerMV(&mv, archivo);
     fclose(archivo);
 
+    printf("CS:");
+    muestraCS(mv);
     // Continuar con la ejecución...
 
     printf("\nFIN MAQUINA VIRTUAL");
