@@ -12,17 +12,7 @@ typedef struct {
     int tablaSegmentos[8][2];
 } maquinaVirtual;
 
-typedef char CodOperacion[5];
-void iniciaNombresOperaciones( CodOperacion nombresOperaciones[32] );
-
-typedef char CodRegistro[5];
-void iniciaRegNombres( CodOperacion nombresRegistros[32][4] );
-
-
-
-void muestInme(char muest[]);
-void muestRegi(char muest[], char *NombreRegistro[][4]);
-void muestMem(char muest[], char *NomReg[][4]);
+int puntero(int posFisica)
 int corrigeSize(int size);
 void leerMV( maquinaVirtual *mv, FILE* arch);
 void muestraCS(maquinaVirtual mv);

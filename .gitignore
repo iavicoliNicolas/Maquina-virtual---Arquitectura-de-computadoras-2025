@@ -4,7 +4,6 @@
 /.objs/
 
 # Archivos específicos de Code::Blocks
-*.cbp
 *.depend
 *.layout
 *.workspace
