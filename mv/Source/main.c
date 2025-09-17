@@ -28,9 +28,11 @@ int main(int argc, char *argv[]) {
     leerMV(&mv, archivo);
     fclose(archivo);
 
-    printf("CS:");
-    muestraCS(mv);
+    //printf("CS:");
+    //muestraCS(mv);
     // Continuar con la ejecución...
+
+    disassembler(mv);
 
     printf("\nFIN MAQUINA VIRTUAL");
 
