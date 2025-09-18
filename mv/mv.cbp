@@ -31,10 +31,18 @@
 		<Compiler>
 			<Add option="-Wall" />
 		</Compiler>
+		<Unit filename="Source/disassembler.c">
+			<Option compilerVar="CC" />
+		</Unit>
 		<Unit filename="Source/main.c">
 			<Option compilerVar="CC" />
 		</Unit>
-		<Unit filename="mv.h" />
+		<Unit filename="Source/mv.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="include/disassembler.h" />
+		<Unit filename="include/mv.h" />
+		<Unit filename="include/operando.h" />
 		<Extensions>
 			<lib_finder disable_auto="1" />
 		</Extensions>

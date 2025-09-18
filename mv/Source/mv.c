@@ -8,6 +8,12 @@ int corrigeSize(int size)
     return aux2 | aux1;
 }
 
+int puntero(int posFisica) {
+
+    short seg = posFisica
+}
+int logicoAFisico()
+
 void leerMV(maquinaVirtual *mv, FILE* arch) {
 
     char cabecera[5];

@@ -12,7 +12,7 @@ typedef struct {
     int tablaSegmentos[8][2];
 } maquinaVirtual;
 
-int puntero(int posFisica)
+int puntero(int posFisica);
 int corrigeSize(int size);
 void leerMV( maquinaVirtual *mv, FILE* arch);
 void muestraCS(maquinaVirtual mv);
