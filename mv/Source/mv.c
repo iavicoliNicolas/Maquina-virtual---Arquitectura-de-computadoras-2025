@@ -9,10 +9,15 @@ int corrigeSize(int size)
 }
 
 int puntero(int posFisica) {
-
-    short seg = posFisica
 }
-int logicoAFisico()
+int logicoAFisico();
+
+void setReg(maquinaVirtual *mv, int reg, int valor) {
+    mv->registros[reg] = valor;
+}
+int getReg(maquinaVirtual *mv, int reg) {
+    return mv->registros[reg];
+}
 
 void leerMV(maquinaVirtual *mv, FILE* arch) {
 
@@ -22,7 +27,7 @@ void leerMV(maquinaVirtual *mv, FILE* arch) {
 
     // 1. Leer cabecera del archivo VMX
     fread(cabecera, sizeof(char), 5, arch);
-    cabecera[5] = '\0'; // Null-terminate para comparación
+    cabecera[5] = '\0'; // Null-terminate para comparaciï¿½n
 
     // Verificar identificador "VMX25"
     if (strcmp(cabecera, "VMX25") != 0) {
@@ -30,36 +35,36 @@ void leerMV(maquinaVirtual *mv, FILE* arch) {
         exit(EXIT_FAILURE);
     }
 
-    // 2. Leer versión
+    // 2. Leer versiï¿½n
     fread(&version, sizeof(unsigned char), 1, arch);
     if (version != 1) {
-        fprintf(stderr, "Error: Versión no soportada: %d\n", version);
+        fprintf(stderr, "Error: Versiï¿½n no soportada: %d\n", version);
         exit(EXIT_FAILURE);
     }
 
-    // 3. Leer tamaño del código (2 bytes, little-endian)
+    // 3. Leer tamaï¿½o del cï¿½digo (2 bytes, little-endian)
     fread(&tamano_codigo, sizeof(unsigned short int), 1, arch);
     tamano_codigo = corrigeSize(tamano_codigo);
 
-    // 4. Verificar que el código cabe en memoria
+    // 4. Verificar que el cï¿½digo cabe en memoria
     if (tamano_codigo > 16384) {
-        fprintf(stderr, "Error: Código demasiado grande (%d bytes)\n", tamano_codigo);
+        fprintf(stderr, "Error: Cï¿½digo demasiado grande (%d bytes)\n", tamano_codigo);
         exit(EXIT_FAILURE);
     }
 
-    // 5. Cargar código en memoria (segmento de código)
+    // 5. Cargar cï¿½digo en memoria (segmento de cï¿½digo)
     fread(mv->memoria, sizeof(char), tamano_codigo, arch);
 
     // 6. Inicializar tabla de descriptores de segmentos
-    // Entrada 0: Segmento de código
+    // Entrada 0: Segmento de cï¿½digo
     mv->tablaSegmentos[0][0] = 0;                    // Base = 0
-    mv->tablaSegmentos[0][1] = tamano_codigo - 1;        // Tamaño del código
+    mv->tablaSegmentos[0][1] = tamano_codigo - 1;        // Tamaï¿½o del cï¿½digo
 
     // Entrada 1: Segmento de datos
-    mv->tablaSegmentos[1][0] = tamano_codigo;        // Base = fin del código
-    mv->tablaSegmentos[1][1] = 16384 - tamano_codigo; // Tamaño del datos
+    mv->tablaSegmentos[1][0] = tamano_codigo;        // Base = fin del cï¿½digo
+    mv->tablaSegmentos[1][1] = 16384 - tamano_codigo; // Tamaï¿½o del datos
 
-    // Las demás entradas (2-7) se inicializan a 0
+    // Las demï¿½s entradas (2-7) se inicializan a 0
     for (int i = 2; i < 8; i++) {
         for ( int j = 0; i < 2; j++)
             mv->tablaSegmentos[i][j] = 0;
@@ -71,23 +76,23 @@ void leerMV(maquinaVirtual *mv, FILE* arch) {
     }
 
     // Inicializar registros especiales
-    mv->registros[26] = 0x00000000;  // CS: segmento de código (tabla entrada 0)
+    mv->registros[26] = 0x00000000;  // CS: segmento de cï¿½digo (tabla entrada 0)
     mv->registros[27] = 0x00010000;  // DS: segmento de datos (tabla entrada 1)
-    mv->registros[3] = 0x00000000;   // IP: comienza en inicio del código
+    mv->registros[3] = 0x00000000;   // IP: comienza en inicio del cï¿½digo
     mv->registros[17] = 0;                      // Condition Code inicial
 
     printf("Programa cargado: %d bytes de codigo\n", tamano_codigo);
 }
 /*
 void muestraCS(maquinaVirtual mv) {
-    printf("=== SEGMENTO DE CÓDIGO (CS) ===\n");
+    printf("=== SEGMENTO DE Cï¿½DIGO (CS) ===\n");
 
-    // Obtener información del segmento de código desde tabla de segmentos
-    int base_cs = mv.tablaSegmentos[0][0];      // Base del segmento de código
-    int tamano_cs = mv.tablaSegmentos[0][1];    // Tamaño del segmento de código
+    // Obtener informaciï¿½n del segmento de cï¿½digo desde tabla de segmentos
+    int base_cs = mv.tablaSegmentos[0][0];      // Base del segmento de cï¿½digo
+    int tamano_cs = mv.tablaSegmentos[0][1];    // Tamaï¿½o del segmento de cï¿½digo
 
     printf("Base: 0x%04X, Tamano: %d bytes\n", base_cs, tamano_cs);
-    printf("Dirección IP: 0x%04X\n", mv.registros[3]); // IP
+    printf("Direcciï¿½n IP: 0x%04X\n", mv.registros[3]); // IP
     printf("\n");
 
     // Mostrar contenido en formato hexadecimal y ASCII
@@ -95,7 +100,7 @@ void muestraCS(maquinaVirtual mv) {
     printf("-------  ----------------------------------  --------\n");
 
     for (int i = 0; i < tamano_cs; i += 16) {
-        // Dirección actual
+        // Direcciï¿½n actual
         printf("0x%04X:  ", base_cs + i);
 
         // Bytes en hexadecimal
@@ -106,7 +111,7 @@ void muestraCS(maquinaVirtual mv) {
                 printf("   "); // Espacios para alinear
             }
 
-            if (j == 7) printf(" "); // Separador a mitad de línea
+            if (j == 7) printf(" "); // Separador a mitad de lï¿½nea
         }
 
         printf(" ");
@@ -128,12 +133,40 @@ void muestraCS(maquinaVirtual mv) {
         printf("\n");
     }
 
-    // Mostrar también el valor del registro CS
+    // Mostrar tambiï¿½n el valor del registro CS
     printf("\nRegistro CS: 0x%08X\n", mv.registros[26]);
 }
 */
 
-void ejecutarMV(maquinaVirtual *mv);
+void ejecutarMV(maquinaVirtual *mv) {
+
+    operando op[2];
+    //cargar el vector de funciones
+    Toperaciones v[32];
+    cargaVF(v);
+    //cargar el vector de funciones del sistema
+    funcionSys vecLlamadas[2];
+    loadSYSOperationArray(vecLlamadas);
+    
+
+    //Ciclo de ejecucion
+    while( mv->registros[OPC] != 0x0F || mv->registros[IP] < 16384 ) {
+
+        //leer instruccion apuntada por el registro IP
+        leerInstruccion( *mv, op );
+        //Almacenar el codigo de operacion en el registro OPC
+        setReg(mv, OPC, getMem(mv, op[0]));
+        //Guardar en los registros OP1 y OP2 los operandos de la instruccion
+        setReg(mv, OP1, getMem(mv, op[1]));
+        setReg(mv, OP2, getMem(mv, op[2]));
+        //Ubicar en el registro IP la proxima instruccion a ejecutar
+        setReg(mv, IP, mv->registros[IP] + 1 + (op[0].tipo != 0) + (op[1].tipo != 0) + (op[2].tipo != 0));
+        //Realizar la operacion indicada por el codigo de operacion
+        ejecutarOperacion(mv, mv->registros[OPC], op);
+        //Repetir el proceso hasta encontrar la instruccion STOP}
+    }
+    printf("\nEjecucion finalizada\n");
+}
 
 void disassembler( maquinaVirtual mv ) {
 

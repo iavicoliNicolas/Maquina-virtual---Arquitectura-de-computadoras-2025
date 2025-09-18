@@ -39,3 +39,19 @@ void loadSYSOperationArray(funcionSys *vecLlamadas){
     vecLlamadas[1] = writeSys; 
 }
 
+//funciones assembler
+void MOV(maquinaVirtual *mv, operando *op){
+    setOp(mv, op[1], getOp(mv, op[0]));
+}
+void ADD(maquinaVirtual *mv, operando *op){
+    setOp(mv, op[1], getOp(mv, op[1]) + getOp(mv, op[0]));
+}
+void SUB(maquinaVirtual *mv, operando *op){
+    setOp(mv, op[1], getOp(mv, op[1]) - getOp(mv, op[0]));
+}
+void MUL(maquinaVirtual *mv, operando *op){
+    setOp(mv, op[1], getOp(mv, op[1]) * getOp(mv, op[0]));
+}
+void DIV(maquinaVirtual *mv, operando *op){
+    setOp(mv, op[1], getOp(mv, op[1]) / getOp(mv, op[0]));
+}

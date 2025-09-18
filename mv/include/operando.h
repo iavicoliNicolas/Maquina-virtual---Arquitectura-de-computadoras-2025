@@ -3,8 +3,6 @@
 
 #include "mv.h"
 
-#define CS 26
-#define DS 27
 
 typedef struct  {
     char tipo;

@@ -30,7 +30,8 @@ int main(int argc, char *argv[]) {
 
     //printf("CS:");
     //muestraCS(mv);
-    // Continuar con la ejecuci�n...
+    
+    ejecutarMV(&mv);
 
     disassembler(mv);
 
