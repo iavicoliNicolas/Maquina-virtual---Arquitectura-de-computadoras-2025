@@ -169,5 +169,5 @@ void ejecutarMV(maquinaVirtual *mv) {
 }
 
 void disassembler( maquinaVirtual mv ) {
-
+    
 }
