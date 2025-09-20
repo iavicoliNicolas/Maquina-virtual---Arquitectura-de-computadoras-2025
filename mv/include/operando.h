@@ -11,7 +11,7 @@ typedef struct  {
     int desplazamiento;
 } operando;
 
-int getReg(maquinaVirtual *mv, operando op);
+//int getReg(maquinaVirtual *mv, operando op);
 int getMem(maquinaVirtual *mv, operando op);
 int getOp(maquinaVirtual *mv, operando op);
 void setOp(maquinaVirtual *mv, operando op, int);

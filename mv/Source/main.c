@@ -1,5 +1,6 @@
 #include <stdio.h>
 #include <stdlib.h>
+#include <stdint.h>
 #include "../include/mv.h"
 
 int verificarIntegridadVMX(FILE* arch);
@@ -31,9 +32,9 @@ int main(int argc, char *argv[]) {
     //printf("CS:");
     //muestraCS(mv);
     
-    ejecutarMV(&mv);
+    //ejecutarMV(&mv);
 
-    disassembler(mv);
+    //disassembler(mv);
 
     printf("\nFIN MAQUINA VIRTUAL");
 
