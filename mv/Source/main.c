@@ -1,6 +1,6 @@
 #include <stdio.h>
 #include <stdlib.h>
-#include "mv.h"
+#include "../include/mv.h"
 
 int verificarIntegridadVMX(FILE* arch);
 
@@ -30,7 +30,8 @@ int main(int argc, char *argv[]) {
 
     //printf("CS:");
     //muestraCS(mv);
-    // Continuar con la ejecución...
+    
+    ejecutarMV(&mv);
 
     disassembler(mv);
 
@@ -40,13 +41,13 @@ int main(int argc, char *argv[]) {
 }
 
 int verificarIntegridadVMX(FILE* arch) {
-    // Verificar que el archivo tiene al menos el tamaño mínimo de cabecera
+    // Verificar que el archivo tiene al menos el tamaï¿½o mï¿½nimo de cabecera
     fseek(arch, 0, SEEK_END);
     long file_size = ftell(arch);
     fseek(arch, 0, SEEK_SET);
 
-    if (file_size < 7) { // 5 (VMX25) + 1 (versión) + 2 (tamaño)
-        fprintf(stderr, "Error: Archivo demasiado pequeño\n");
+    if (file_size < 7) { // 5 (VMX25) + 1 (versiï¿½n) + 2 (tamaï¿½o)
+        fprintf(stderr, "Error: Archivo demasiado pequeï¿½o\n");
         return 0;
     }
 

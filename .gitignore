@@ -3,6 +3,8 @@
 /obj/
 /.objs/
 
+/.vscode/
+
 # Archivos específicos de Code::Blocks
 *.depend
 *.layout

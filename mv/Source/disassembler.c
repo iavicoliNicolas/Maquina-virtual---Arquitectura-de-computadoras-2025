@@ -1,7 +1,7 @@
 #include "disassembler.h"
 #include <string.h>
 
-void cargaVectorDisassembler(funcionDisassembler *v){
+void cargaVectorDisassembler(funcionDisassembler *v) {
     //operaciones de 2 operandos
     v[0x10] = imprimeMOV;
     v[0x11] = imprimeADD;
@@ -33,7 +33,7 @@ void cargaVectorDisassembler(funcionDisassembler *v){
     v[0x0F] = imprimeSTOP;
 }
 
-void obtieneTAG(char reg,char segmento,char nombre[]){
+void obtieneTAG(char reg,char segmento,char nombre[]) {
     switch (reg){
     case 0x00:strcpy(nombre,"LAR");
         break;
@@ -127,7 +127,6 @@ void obtieneTAG(char reg,char segmento,char nombre[]){
                     break;
         }
         break;
-    }
     case 0x10:strcpy(nombre,"AC");
         break;
     case 0x11:strcpy(nombre,"CC");
@@ -152,9 +151,10 @@ void obtieneTAG(char reg,char segmento,char nombre[]){
         break;
     case 0x1B:strcpy(nombre,"DS");
         break;
+    }
 }
 
-void imprimeMOV(InstruccionDisassembler disInstruccion){
+void imprimeMOV(InstruccionDisassembler disInstruccion) {
     printf("MOV ");
     imprimeOperando(disInstruccion.operandos[0]);
     printf(",");
