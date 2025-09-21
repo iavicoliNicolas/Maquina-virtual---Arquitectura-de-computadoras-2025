@@ -169,9 +169,7 @@ void leerInstruccion(maquinaVirtual *mv, char *operacion, operando *op) {
     int ip = logicoAFisico(mv, mv->registros[IP]); 
     char operacion;
     //leo el primer byte de la instruccion
-    leerPrimerByte(mv, &operacion, &op[0].tipo, &op[1].tipo, ip);
-    
-    recuperaOperandos(mv, op, ip);
+    leerPrimerByte(mv, operacion, &op[0].tipo, &op[1].tipo, ip);
 
 }
 
