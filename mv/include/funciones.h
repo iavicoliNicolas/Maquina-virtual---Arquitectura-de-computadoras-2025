@@ -1,11 +1,11 @@
 #ifndef FUNCIOONES_H
 #define FUNCIOONES_H
-
 #include "mv.h"
 #include "operando.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+
 
 typedef int Sistema; //auxiliar 
 
@@ -51,4 +51,5 @@ void STOP(maquinaVirtual *mv, operando *op);
 void readSys(maquinaVirtual *mv,Sistema aux);
 void writeSys(maquinaVirtual *mv,Sistema aux);
 
+void ejecutarOperacion(maquinaVirtual *mv, int codigo, operando *op);
 #endif // FUNCIOONES_H

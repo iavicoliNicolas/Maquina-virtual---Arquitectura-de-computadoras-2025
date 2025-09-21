@@ -1,7 +1,9 @@
 #include <stdio.h>
 #include <stdlib.h>
-#include <string.h>
 #include "mv.h"
+#include "operando.h"
+#include "funciones.h"
+#include "disassembler.h"
 
 int corrigeSize(int size)
 {
@@ -148,7 +150,7 @@ void ejecutarMV(maquinaVirtual *mv) {
 
     while (mv->registros[OPC] != 0x0F || mv->registros[IP] < 16384) {
 
-        leerInstruccion(*mv, op);
+        leerInstruccion(mv, op);
         setReg(mv, OPC, getMem(mv, op[0]));
         setReg(mv, OP1, getMem(mv, op[1]));
         setReg(mv, OP2, getMem(mv, op[2]));
@@ -157,7 +159,7 @@ void ejecutarMV(maquinaVirtual *mv) {
     }
     printf("\nEjecución finalizada\n");
 }
-
-void disassembler(maquinaVirtual mv) {
-    
+void leerInstruccion(maquinaVirtual *mv, operando *op) {
+    //////
 }
+

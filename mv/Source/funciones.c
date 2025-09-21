@@ -1,5 +1,6 @@
 #include "funciones.h"
-
+#include "operando.h"
+#include "mv.h"
 void cargaVF(Toperaciones *v){
     //operaciones de 2 operandos
     v[0x10] = MOV;
@@ -54,4 +55,31 @@ void MUL(maquinaVirtual *mv, operando *op){
 }
 void DIV(maquinaVirtual *mv, operando *op){
     setOp(mv, op[1], getOp(mv, op[1]) / getOp(mv, op[0]));
+}
+void CMP(maquinaVirtual *mv, operando *op) {}
+void SHL(maquinaVirtual *mv, operando *op) {}
+void SHR(maquinaVirtual *mv, operando *op) {}
+void SAR(maquinaVirtual *mv, operando *op) {}
+void AND(maquinaVirtual *mv, operando *op) {}
+void OR(maquinaVirtual *mv, operando *op) {}
+void XOR(maquinaVirtual *mv, operando *op) {}
+void SWAP(maquinaVirtual *mv, operando *op) {}
+void LDL(maquinaVirtual *mv, operando *op) {}
+void LDH(maquinaVirtual *mv, operando *op) {}
+void RND(maquinaVirtual *mv, operando *op) {}
+void SYS(maquinaVirtual *mv, operando *op) {}
+void JMP(maquinaVirtual *mv, operando *op) {}
+void JZ(maquinaVirtual *mv, operando *op) {}
+void JP(maquinaVirtual *mv, operando *op) {}
+void JN(maquinaVirtual *mv, operando *op) {}
+void JNZ(maquinaVirtual *mv, operando *op) {}
+void JNP(maquinaVirtual *mv, operando *op) {}
+void JNN(maquinaVirtual *mv, operando *op) {}
+void NOT(maquinaVirtual *mv, operando *op) {}
+void STOP(maquinaVirtual *mv, operando *op) {}
+
+void readSys(maquinaVirtual *mv, int aux) {}
+void writeSys(maquinaVirtual *mv, int aux) {}
+void ejecutarOperacion(maquinaVirtual *mv, int opcode, operando *op) {
+   
 }

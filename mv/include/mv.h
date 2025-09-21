@@ -1,12 +1,15 @@
 #ifndef MV_H
 #define MV_H
 
-#include "operando.h"
-#include "funciones.h"
-#include "operando.h"
-
 #include <stdio.h>
 #include <stdlib.h>
+#include "operando.h"
+
+typedef struct maquinaVirtual {
+    char memoria[16384];
+    int registros[32];
+    int tablaSegmentos[8][2];
+} maquinaVirtual;
 
 #define LAR 0
 #define MAR 1
@@ -22,11 +25,7 @@
 #define CS 26
 #define DS 27
 
-typedef struct {
-    char memoria[16384];
-    int registros[32];
-    int tablaSegmentos[8][2];
-} maquinaVirtual;
+
 
 int puntero(int posFisica);
 int corrigeSize(int size);
@@ -42,6 +41,8 @@ void leerMV( maquinaVirtual *mv, FILE* arch);
 void ejecutarMV(maquinaVirtual *mv);
 
 //muestra del codigo ensamblador en pantalla
-void disassembler( maquinaVirtual mv );
+void disassembler( maquinaVirtual *mv );
+
+void leerInstruccion(maquinaVirtual *mv, operando *op);
 
 #endif // MV_H

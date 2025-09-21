@@ -1,22 +1,25 @@
 #ifndef OPERANDO_H
 #define OPERANDO_H
 
-#include "mv.h"
+typedef struct maquinaVirtual maquinaVirtual;
 
-
-typedef struct  {
+typedef struct operando {
     char tipo;
     char registro;
     char segmentoReg;
     int desplazamiento;
 } operando;
 
-int getReg(maquinaVirtual *mv, operando op);
+extern const char* mnemonicos[32];
+
+int getRegOp(maquinaVirtual *mv, operando op);
 int getMem(maquinaVirtual *mv, operando op);
-int getOp(maquinaVirtual *mv, operando op);
-void setOp(maquinaVirtual *mv, operando op, int);
+int getOp(maquinaVirtual *mv, operando op);   
+void setOp(maquinaVirtual *mv, operando op, int valor);
 void recuperaOperandos(maquinaVirtual *mv,operando *o,int ip);
 void imprimeOperando(operando op);
+int decodificaOperando(maquinaVirtual *mv, int pos, int tipo, operando *op);
+
 
 
 #endif // OPERANDO_H
