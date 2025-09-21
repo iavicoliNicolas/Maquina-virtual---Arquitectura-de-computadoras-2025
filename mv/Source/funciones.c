@@ -39,28 +39,46 @@ void loadSYSOperationArray(funcionSys *vecLlamadas){
     vecLlamadas[1] = writeSys; 
 }
 
-void setLAR(maquinaVirtual *mv, int valor) {
-    mv->registros[LAR] = valor;
+void setLAR(maquinaVirtual *mv, int segmento, int desplaz) {
+    mv->registros[LAR] = ((segmento & 0xFFFF) << 16) | (desplaz & 0xFFFF);
 }
-void setMAR(maquinaVirtual *mv, int valor) {
-    mv->registros[MAR] = valor;
+void setMAR(maquinaVirtual *mv, int nbytes, int dirFisica) {
+    mv->registros[MAR] = ((nbytes & 0xFFFF) << 16) | (dirFisica & 0xFFFF);
 }
 void setMBR(maquinaVirtual *mv, int valor) {
     mv->registros[MBR] = valor;
 }
-void setOP1(maquinaVirtual *mv, operando valor, int tipo) {
-    
-}
-void setOP2(maquinaVirtual *mv, operando valor, int tipo) {
+void setRegOP(maquinaVirtual *mv, int reg, operando valor, int tipo) {
+
+    mv->registros[reg] = tipo << 24; //almacenar el tipo en los 8 bits mas significativos
+
+    switch (tipo) {
+        case 0: //no usado
+            mv->registros[reg] |= 0;
+            break;
+        case 1: //registro
+            mv->registros[reg] |= (valor.registro & 0xFF);
+            break;
+        case 2: //inmediato
+            mv->registros[reg] |= (valor.desplazamiento & 0xFFFF);
+            break;
+        case 3: //memoria
+            mv->registros[reg] |= (valor.registro & 0xFF) << 16;
+            mv->registros[reg] |= (valor.desplazamiento & 0xFFFF);
+            break;
+        default:
+            fprintf(stderr, "Error: Tipo de operando invalido: %d\n", tipo);
+            exit(EXIT_FAILURE);
+    }
 }
 
 void setCC(maquinaVirtual *mv, int resultado) {
     if (resultado == 0) {
-        mv->registros[CC] = 0; // Cero
+        mv->registros[CC] = 0b0100000000000000; // Cero
     } else if (resultado > 0) {
-        mv->registros[CC] = 1; // Positivo
+        mv->registros[CC] = 0b0000000000000000; // Positivo
     } else {
-        mv->registros[CC] = -1; // Negativo
+        mv->registros[CC] = 0b1000000000000000; // Negativo
     }
 }
 
@@ -81,8 +99,14 @@ void MUL(maquinaVirtual *mv, operando *op){
     setOp(mv, op[1], getOp(mv, op[1]) * getOp(mv, op[0]));
     setCC(mv, getOp(mv, op[1]));
 }
-void DIV(maquinaVirtual *mv, operando *op){
+void DIV(maquinaVirtual *mv, operando *op) {
+    int aux = getOp(mv, op[1]);
+    if ( aux == 0) {
+        fprintf(stderr, "Error: Division por cero\n");
+        exit(EXIT_FAILURE);
+    }
     setOp(mv, op[1], getOp(mv, op[1]) / getOp(mv, op[0]));
+    mv->registros[AC] = getOp(mv, op[1]) % getOp(mv, op[0]); //guardar el resto en AC
     setCC(mv, getOp(mv, op[1]));
 }
 void CMP(maquinaVirtual *mv, operando *op){

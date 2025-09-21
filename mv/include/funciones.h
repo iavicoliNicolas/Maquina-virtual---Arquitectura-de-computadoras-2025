@@ -18,12 +18,12 @@ typedef void (*funcionSys)(maquinaVirtual *, Sistema);
 void cargaVF(Toperaciones *);
 void loadSYSOperationArray(funcionSys *vecLlamadas);
 
-void setLAR(maquinaVirtual *mv, int valor);
-void setMAR(maquinaVirtual *mv, int valor);
+void setLAR(maquinaVirtual *mv, int segmento, int desplaz);
+void setMAR(maquinaVirtual *mv, int nbytes, int dirFisica);
 void setMBR(maquinaVirtual *mv, int valor);
 
-void setOP1(maquinaVirtual *mv, operando valor, int tipo);
-void setOP2(maquinaVirtual *mv, operando valor, int tipo);
+void setRegOP(maquinaVirtual *mv, int reg, operando valor, int tipo);
+
 
 void setCC(maquinaVirtual *mv, int resultado);
 //funciones de assembler

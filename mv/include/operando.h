@@ -7,15 +7,14 @@
 typedef struct  {
     char tipo;
     char registro;
-    char segmentoReg;
-    int desplazamiento;
+    int desplazamiento; //o valor inmediato
 } operando;
 
-int getReg(maquinaVirtual *mv, operando op);
-int getMem(maquinaVirtual *mv, operando op);
+int getOPReg(maquinaVirtual *mv, operando op);
+int getOPMem(maquinaVirtual *mv, operando op);
 int getOp(maquinaVirtual *mv, operando op);
 void setOp(maquinaVirtual *mv, operando op, int num);
-void recuperaOperandos(maquinaVirtual *mv,operando *o,int ip);
+void recuperaOperandos(maquinaVirtual *mv, int *operandos,int ip);
 void imprimeOperando(operando op);
 
 

@@ -3,7 +3,6 @@
 
 #include "operando.h"
 #include "funciones.h"
-#include "operando.h"
 
 #include <stdio.h>
 #include <stdlib.h>

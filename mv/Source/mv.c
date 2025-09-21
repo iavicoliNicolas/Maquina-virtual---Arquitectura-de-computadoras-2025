@@ -175,6 +175,7 @@ void leerInstruccion(maquinaVirtual *mv, char *operacion, operando *op) {
 
 }
 
+
 void ejecutarMV(maquinaVirtual *mv) {
 
     char operacion;
@@ -195,14 +196,24 @@ void ejecutarMV(maquinaVirtual *mv) {
         //Almacenar el codigo de operacion en el registro OPC
         setReg(mv, OPC, operacion );
         printf("Valor de opc: %d\n", mv->registros[OPC]);
+
+        
+        recuperaOperandos(mv, operandos, mv->registros[IP]);
         //Guardar en los registros OP1 y OP2 los operandos de la instruccion
-        setOP1(mv, operandos[0], operandos[0].tipo);
-        setOP2(mv, operandos[1], operandos[1].tipo);
+        setRegOP(mv, OP1, operandos[0], operandos[0].tipo);
+        setRegOP(mv, OP2, operandos[1], operandos[1].tipo);
         //Ubicar en el registro IP la proxima instruccion a ejecutar
         setReg(mv, IP, mv->registros[IP] + 1 + (operandos[0].tipo != 0) + (operandos[1].tipo != 0));
         //Realizar la operacion indicada por el codigo de operacion
-        ejecutarOperacion(mv, mv->registros[OPC], operandos);
-        //Repetir el proceso hasta encontrar la instruccion STOP
+
+
+        if (operacion < 0 || operacion >= 32) {
+            fprintf(stderr, "Error: Operacion invalida: %d\n", operacion);
+            exit(EXIT_FAILURE);
+        }
+
+        //ejecutar la operacion
+        v[operacion](mv, operandos);
  
     }
     printf("\nEjecucion finalizada\n");
