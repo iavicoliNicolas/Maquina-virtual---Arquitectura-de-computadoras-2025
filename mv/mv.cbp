@@ -43,6 +43,7 @@
 		<Unit filename="include/disassembler.h" />
 		<Unit filename="include/mv.h" />
 		<Unit filename="include/operando.h" />
+		<Unit filename="include/funciones.h" />
 		<Extensions>
 			<lib_finder disable_auto="1" />
 		</Extensions>
