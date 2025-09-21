@@ -39,21 +39,51 @@ void loadSYSOperationArray(funcionSys *vecLlamadas){
     vecLlamadas[1] = writeSys; 
 }
 
+void setLAR(maquinaVirtual *mv, int valor) {
+    mv->registros[LAR] = valor;
+}
+void setMAR(maquinaVirtual *mv, int valor) {
+    mv->registros[MAR] = valor;
+}
+void setMBR(maquinaVirtual *mv, int valor) {
+    mv->registros[MBR] = valor;
+}
+void setOP1(maquinaVirtual *mv, operando valor, int tipo) {
+    
+}
+void setOP2(maquinaVirtual *mv, operando valor, int tipo) {
+}
+
+void setCC(maquinaVirtual *mv, int resultado) {
+    if (resultado == 0) {
+        mv->registros[CC] = 0; // Cero
+    } else if (resultado > 0) {
+        mv->registros[CC] = 1; // Positivo
+    } else {
+        mv->registros[CC] = -1; // Negativo
+    }
+}
+
+
 //funciones assembler
 void MOV(maquinaVirtual *mv, operando *op){
     setOp(mv, op[1], getOp(mv, op[0]));
 }
 void ADD(maquinaVirtual *mv, operando *op){
     setOp(mv, op[1], getOp(mv, op[1]) + getOp(mv, op[0]));
+    setCC(mv, getOp(mv, op[1]));
 }
 void SUB(maquinaVirtual *mv, operando *op){
     setOp(mv, op[1], getOp(mv, op[1]) - getOp(mv, op[0]));
+    setCC(mv, getOp(mv, op[1]));
 }
 void MUL(maquinaVirtual *mv, operando *op){
     setOp(mv, op[1], getOp(mv, op[1]) * getOp(mv, op[0]));
+    setCC(mv, getOp(mv, op[1]));
 }
 void DIV(maquinaVirtual *mv, operando *op){
     setOp(mv, op[1], getOp(mv, op[1]) / getOp(mv, op[0]));
+    setCC(mv, getOp(mv, op[1]));
 }
 void CMP(maquinaVirtual *mv, operando *op){
     int resultado = getOp(mv, op[1]) - getOp(mv, op[0]);
@@ -61,21 +91,32 @@ void CMP(maquinaVirtual *mv, operando *op){
 }
 void SHL(maquinaVirtual *mv, operando *op){
     setOp(mv, op[1], getOp(mv, op[1]) << getOp(mv, op[0]));
+    setCC(mv, getOp(mv, op[1]));
 }
 void SAR(maquinaVirtual *mv, operando *op){
     setOp(mv, op[1], getOp(mv, op[1]) >> getOp(mv, op[0]));
+    setCC(mv, getOp(mv, op[1]));
 }
 void SHR(maquinaVirtual *mv, operando *op){
     setOp(mv, op[1], (unsigned int)getOp(mv, op[1]) >> getOp(mv, op[0]));
+    setCC(mv, getOp(mv, op[1]));
 }
 void AND(maquinaVirtual *mv, operando *op){
     setOp(mv, op[1], getOp(mv, op[1]) & getOp(mv, op[0]));
+    setCC(mv, getOp(mv, op[1]));
 }
 void OR(maquinaVirtual *mv, operando *op){
     setOp(mv, op[1], getOp(mv, op[1]) | getOp(mv, op[0]));
+    setCC(mv, getOp(mv, op[1]));
 }
 void XOR(maquinaVirtual *mv, operando *op){
     setOp(mv, op[1], getOp(mv, op[1]) ^ getOp(mv, op[0]));
+    setCC(mv, getOp(mv, op[1]));
+}
+void SWAP(maquinaVirtual *mv, operando *op){
+    int temp = getOp(mv, op[0]);
+    setOp(mv, op[0], getOp(mv, op[1]));
+    setOp(mv, op[1], temp);
 }
 void RND(maquinaVirtual *mv, operando *op){
     setOp(mv, op[0], rand());

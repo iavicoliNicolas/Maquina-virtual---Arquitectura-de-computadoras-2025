@@ -8,6 +8,10 @@
 #include <stdio.h>
 #include <stdlib.h>
 
+#define MAX_MEM 16384
+#define MAX_REG 32
+#define MAX_SEG 8
+
 #define LAR 0
 #define MAR 1
 #define MBR 2
@@ -23,9 +27,9 @@
 #define DS 27
 
 typedef struct {
-    char memoria[16384];
-    int registros[32];
-    int tablaSegmentos[8][2];
+    char memoria[MAX_MEM];
+    int registros[MAX_REG];
+    int tablaSegmentos[MAX_SEG][2];
 } maquinaVirtual;
 
 int puntero(int posFisica);
