@@ -98,17 +98,11 @@ void leerMV(maquinaVirtual *mv, FILE* arch) {
     }
 
     // Inicializar registros especiales
-<<<<<<< HEAD
+
     mv->registros[CS] = 0x00000000;  // CS: segmento de c digo (tabla entrada 0)
     mv->registros[DS] = 0x00010000;  // DS: segmento de datos (tabla entrada 1)
     mv->registros[IP] = 0x00000000;   // IP: comienza en inicio del c digo
     mv->registros[CC] = 0;                      // Condition Code inicial
-=======
-    mv->registros[26] = 0x00000000;  // CS: segmento de código (tabla entrada 0)
-    mv->registros[27] = 0x00010000;  // DS: segmento de datos (tabla entrada 1)
-    mv->registros[3]  = 0x00000000;  // IP: comienza en inicio del código
-    mv->registros[17] = 0;           // Condition Code inicial
->>>>>>> origin/Euge
 
     printf("Programa cargado: %d bytes de código\n", tamano_codigo);
 }
@@ -162,7 +156,7 @@ void muestraCS(maquinaVirtual mv) {
     printf("\nRegistro CS: 0x%08X\n", mv.registros[26]);
 }
 */
-void leerPrimerByte(maquinaVirtual *mv, char *operacion, int *tipoA, int *tipoB, int ip) {
+void leerPrimerByte(maquinaVirtual *mv, char *operacion, char *tipoA, char *tipoB, int ip) {
 
 
     *operacion = mv->memoria[logicoAFisico(mv, ip)] & 0x1F; // 5 bits menos significativos
@@ -175,7 +169,6 @@ void leerInstruccion(maquinaVirtual *mv, char *operacion, operando *op) {
 
     //consigo la direccion fisica de la instruccion
     int ip = logicoAFisico(mv, mv->registros[IP]); 
-    char operacion;
     //leo el primer byte de la instruccion
     leerPrimerByte(mv, operacion, &op[0].tipo, &op[1].tipo, ip);
 
@@ -198,7 +191,7 @@ void ejecutarMV(maquinaVirtual *mv) {
     while( mv->registros[IP] < mv->tablaSegmentos[0][1] && mv->registros[IP] > 0) //mientras IP < limite del segmento de codigo
     { 
         //leer instruccion apuntada por el registro IP
-        leerInstruccion( mv, &operacion, &operandos );
+        leerInstruccion( mv, &operacion, operandos );
         //Almacenar el codigo de operacion en el registro OPC
         setReg(mv, OPC, operacion );
         printf("Valor de opc: %d\n", mv->registros[OPC]);
@@ -224,7 +217,5 @@ void ejecutarMV(maquinaVirtual *mv) {
     }
     printf("\nEjecución finalizada\n");
 }
-void leerInstruccion(maquinaVirtual *mv, operando *op) {
-    //////
-}
+
 

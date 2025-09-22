@@ -110,7 +110,7 @@ void DIV(maquinaVirtual *mv, operando *op) {
     mv->registros[AC] = getOp(mv, op[1]) % getOp(mv, op[0]); //guardar el resto en AC
     setCC(mv, getOp(mv, op[1]));
 }
-<<<<<<< HEAD
+
 void CMP(maquinaVirtual *mv, operando *op){
     int resultado = getOp(mv, op[1]) - getOp(mv, op[0]);
     setCC(mv, resultado);
@@ -202,4 +202,10 @@ void NOT(maquinaVirtual *mv, operando *op){
 }
 void STOP(maquinaVirtual *mv, operando *op){
     exit(EXIT_SUCCESS);
+}
+void readSys(maquinaVirtual *mv, int arg) {
+   
+}
+
+void writeSys(maquinaVirtual *mv, int arg) {
 }
