@@ -1,4 +1,9 @@
+#include <stdio.h>
+#include <stdlib.h>
 #include "mv.h"
+#include "operando.h"
+#include "funciones.h"
+#include "disassembler.h"
 
 int corrigeSize(int size)
 {
@@ -44,7 +49,7 @@ void leerMV(maquinaVirtual *mv, FILE* arch) {
 
     // 1. Leer cabecera del archivo VMX
     fread(cabecera, sizeof(char), 5, arch);
-    cabecera[5] = '\0'; // Null-terminate para comparaci�n
+    cabecera[5] = '\0'; // Null-terminate para comparación
 
     // Verificar identificador "VMX25"
     if (strcmp(cabecera, "VMX25") != 0) {
@@ -52,38 +57,38 @@ void leerMV(maquinaVirtual *mv, FILE* arch) {
         exit(EXIT_FAILURE);
     }
 
-    // 2. Leer versi�n
+    // 2. Leer versión
     fread(&version, sizeof(unsigned char), 1, arch);
     if (version != 1) {
-        fprintf(stderr, "Error: Versi�n no soportada: %d\n", version);
+        fprintf(stderr, "Error: Versión no soportada: %d\n", version);
         exit(EXIT_FAILURE);
     }
 
-    // 3. Leer tama�o del c�digo (2 bytes, little-endian)
+    // 3. Leer tamaño del código (2 bytes, little-endian)
     fread(&tamano_codigo, sizeof(unsigned short int), 1, arch);
     tamano_codigo = corrigeSize(tamano_codigo);
 
-    // 4. Verificar que el c�digo cabe en memoria
+    // 4. Verificar que el código cabe en memoria
     if (tamano_codigo > 16384) {
-        fprintf(stderr, "Error: C�digo demasiado grande (%d bytes)\n", tamano_codigo);
+        fprintf(stderr, "Error: Código demasiado grande (%d bytes)\n", tamano_codigo);
         exit(EXIT_FAILURE);
     }
 
-    // 5. Cargar c�digo en memoria (segmento de c�digo)
+    // 5. Cargar código en memoria (segmento de código)
     fread(mv->memoria, sizeof(char), tamano_codigo, arch);
 
     // 6. Inicializar tabla de descriptores de segmentos
-    // Entrada 0: Segmento de c�digo
-    mv->tablaSegmentos[0][0] = 0;                    // Base = 0
-    mv->tablaSegmentos[0][1] = tamano_codigo - 1;        // Tama�o del c�digo
+    // Entrada 0: Segmento de código
+    mv->tablaSegmentos[0][0] = 0;                      // Base = 0
+    mv->tablaSegmentos[0][1] = tamano_codigo - 1;      // Tamaño del código
 
     // Entrada 1: Segmento de datos
-    mv->tablaSegmentos[1][0] = tamano_codigo;        // Base = fin del c�digo
-    mv->tablaSegmentos[1][1] = 16384 - tamano_codigo; // Tama�o del datos
+    mv->tablaSegmentos[1][0] = tamano_codigo;          // Base = fin del código
+    mv->tablaSegmentos[1][1] = 16384 - tamano_codigo;  // Tamaño de datos
 
-    // Las dem�s entradas (2-7) se inicializan a 0
+    // Las demás entradas (2-7) se inicializan a 0
     for (int i = 2; i < 8; i++) {
-        for ( int j = 0; i < 2; j++)
+        for (int j = 0; j < 2; j++)
             mv->tablaSegmentos[i][j] = 0;
     }
 
@@ -93,23 +98,31 @@ void leerMV(maquinaVirtual *mv, FILE* arch) {
     }
 
     // Inicializar registros especiales
-    mv->registros[CS] = 0x00000000;  // CS: segmento de c�digo (tabla entrada 0)
+<<<<<<< HEAD
+    mv->registros[CS] = 0x00000000;  // CS: segmento de c digo (tabla entrada 0)
     mv->registros[DS] = 0x00010000;  // DS: segmento de datos (tabla entrada 1)
-    mv->registros[IP] = 0x00000000;   // IP: comienza en inicio del c�digo
+    mv->registros[IP] = 0x00000000;   // IP: comienza en inicio del c digo
     mv->registros[CC] = 0;                      // Condition Code inicial
+=======
+    mv->registros[26] = 0x00000000;  // CS: segmento de código (tabla entrada 0)
+    mv->registros[27] = 0x00010000;  // DS: segmento de datos (tabla entrada 1)
+    mv->registros[3]  = 0x00000000;  // IP: comienza en inicio del código
+    mv->registros[17] = 0;           // Condition Code inicial
+>>>>>>> origin/Euge
 
-    printf("Programa cargado: %d bytes de codigo\n", tamano_codigo);
+    printf("Programa cargado: %d bytes de código\n", tamano_codigo);
 }
+
 /*
 void muestraCS(maquinaVirtual mv) {
-    printf("=== SEGMENTO DE C�DIGO (CS) ===\n");
+    printf("=== SEGMENTO DE CÓDIGO (CS) ===\n");
 
-    // Obtener informaci�n del segmento de c�digo desde tabla de segmentos
-    int base_cs = mv.tablaSegmentos[0][0];      // Base del segmento de c�digo
-    int tamano_cs = mv.tablaSegmentos[0][1];    // Tama�o del segmento de c�digo
+    // Obtener información del segmento de código desde tabla de segmentos
+    int base_cs = mv.tablaSegmentos[0][0];      // Base del segmento de código
+    int tamano_cs = mv.tablaSegmentos[0][1];    // Tamaño del segmento de código
 
-    printf("Base: 0x%04X, Tamano: %d bytes\n", base_cs, tamano_cs);
-    printf("Direcci�n IP: 0x%04X\n", mv.registros[3]); // IP
+    printf("Base: 0x%04X, Tamaño: %d bytes\n", base_cs, tamano_cs);
+    printf("Dirección IP: 0x%04X\n", mv.registros[3]); // IP
     printf("\n");
 
     // Mostrar contenido en formato hexadecimal y ASCII
@@ -117,27 +130,23 @@ void muestraCS(maquinaVirtual mv) {
     printf("-------  ----------------------------------  --------\n");
 
     for (int i = 0; i < tamano_cs; i += 16) {
-        // Direcci�n actual
         printf("0x%04X:  ", base_cs + i);
 
-        // Bytes en hexadecimal
         for (int j = 0; j < 16; j++) {
             if (i + j < tamano_cs) {
                 printf("%02X ", (unsigned char)mv.memoria[base_cs + i + j]);
             } else {
-                printf("   "); // Espacios para alinear
+                printf("   ");
             }
-
-            if (j == 7) printf(" "); // Separador a mitad de l�nea
+            if (j == 7) printf(" ");
         }
 
         printf(" ");
 
-        // Bytes en ASCII (solo caracteres imprimibles)
         for (int j = 0; j < 16; j++) {
             if (i + j < tamano_cs) {
                 unsigned char c = mv.memoria[base_cs + i + j];
-                if (c >= 32 && c <= 126) { // Caracteres imprimibles
+                if (c >= 32 && c <= 126) {
                     printf("%c", c);
                 } else {
                     printf(".");
@@ -150,7 +159,6 @@ void muestraCS(maquinaVirtual mv) {
         printf("\n");
     }
 
-    // Mostrar tambi�n el valor del registro CS
     printf("\nRegistro CS: 0x%08X\n", mv.registros[26]);
 }
 */
@@ -176,15 +184,15 @@ void leerInstruccion(maquinaVirtual *mv, char *operacion, operando *op) {
 
 void ejecutarMV(maquinaVirtual *mv) {
 
+
     char operacion;
     operando operandos[2];
     //cargar el vector de funciones
     Toperaciones v[32];
     cargaVF(v);
-    //cargar el vector de funciones del sistema
+
     funcionSys vecLlamadas[2];
     loadSYSOperationArray(vecLlamadas);
-    
 
     //Ciclo de ejecucion
     while( mv->registros[IP] < mv->tablaSegmentos[0][1] && mv->registros[IP] > 0) //mientras IP < limite del segmento de codigo
@@ -214,9 +222,9 @@ void ejecutarMV(maquinaVirtual *mv) {
         v[operacion](mv, operandos);
  
     }
-    printf("\nEjecucion finalizada\n");
+    printf("\nEjecución finalizada\n");
+}
+void leerInstruccion(maquinaVirtual *mv, operando *op) {
+    //////
 }
 
-void disassembler( maquinaVirtual mv ) {
-    
-}

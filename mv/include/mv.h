@@ -1,11 +1,15 @@
 #ifndef MV_H
 #define MV_H
 
-#include "operando.h"
-#include "funciones.h"
-
 #include <stdio.h>
 #include <stdlib.h>
+#include "operando.h"
+#include "funciones.h"
+typedef struct maquinaVirtual {
+    char memoria[MAX_MEM];
+    int registros[MAX_REG];
+    int tablaSegmentos[MAX_SEG][2];
+} maquinaVirtual;
 
 #define MAX_MEM 16384
 #define MAX_REG 32
@@ -25,11 +29,7 @@
 #define CS 26
 #define DS 27
 
-typedef struct {
-    char memoria[MAX_MEM];
-    int registros[MAX_REG];
-    int tablaSegmentos[MAX_SEG][2];
-} maquinaVirtual;
+
 
 int puntero(int posFisica);
 int corrigeSize(int size);
@@ -45,6 +45,8 @@ void leerMV( maquinaVirtual *mv, FILE* arch);
 void ejecutarMV(maquinaVirtual *mv);
 
 //muestra del codigo ensamblador en pantalla
-void disassembler( maquinaVirtual mv );
+void disassembler( maquinaVirtual *mv );
+
+void leerInstruccion(maquinaVirtual *mv, operando *op);
 
 #endif // MV_H

@@ -1,5 +1,6 @@
 #include "funciones.h"
-
+#include "operando.h"
+#include "mv.h"
 void cargaVF(Toperaciones *v){
     //operaciones de 2 operandos
     v[0x10] = MOV;
@@ -109,6 +110,7 @@ void DIV(maquinaVirtual *mv, operando *op) {
     mv->registros[AC] = getOp(mv, op[1]) % getOp(mv, op[0]); //guardar el resto en AC
     setCC(mv, getOp(mv, op[1]));
 }
+<<<<<<< HEAD
 void CMP(maquinaVirtual *mv, operando *op){
     int resultado = getOp(mv, op[1]) - getOp(mv, op[0]);
     setCC(mv, resultado);
