@@ -17,7 +17,7 @@ void imprimeOperando(operando op) {
                 printf("reg%d", op.registro); // por si es reservado
             break;
 
-        case 2: // inmediato (valor)
+        case 2: // inmediato 
             printf("%d", op.desplazamiento);
             break;
 

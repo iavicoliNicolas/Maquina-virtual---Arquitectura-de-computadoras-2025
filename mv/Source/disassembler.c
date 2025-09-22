@@ -82,7 +82,7 @@ static inline unsigned short r16(char *mem, int pos) {
 
 
 void disassembler(maquinaVirtual *mv) {
-    int base_cs, size_cs, end_cs, ip, direccion;
+    int base_cs, size_cs, end_cs, ip;
     unsigned char b0;
     int tipoA, tipoB, codOp;
     operando opA = {0}, opB = {0};
@@ -91,52 +91,62 @@ void disassembler(maquinaVirtual *mv) {
     size_cs = mv->tablaSegmentos[0][1];
     end_cs  = base_cs + size_cs;
 
-    
-       ip = base_cs;
-   while (ip < end_cs) {
-    int direccion = ip;
+    ip = base_cs;
+    while (ip < end_cs) {
+        int direccion = ip;
+        int start_ip  = ip;   // para calcular bytes de instrucción
 
-    // primer byte de la instrucción
-    b0 = r8(mv->memoria, ip++);
-    tipoB = (b0 >> 6) & 0x03; // bits 7–6
-    tipoA = (b0 >> 4) & 0x03; // bits 5–4
-    codOp = b0 & 0x1F;
+        // primer byte de la instrucción
+        b0 = r8(mv->memoria, ip++);
+        tipoB = (b0 >> 6) & 0x03; // bits 7–6
+        tipoA = (b0 >> 4) & 0x03; // bits 5–4
+        codOp = b0 & 0x1F;
 
-    // decodificar operandos en orden inverso
-    ip += decodificaOperando(mv, ip, tipoB, &opB);
-    ip += decodificaOperando(mv, ip, tipoA, &opA);
+        // decodificar operandos en orden inverso
+        ip += decodificaOperando(mv, ip, tipoB, &opB);
+        ip += decodificaOperando(mv, ip, tipoA, &opA);
 
-    // imprime dirección
-    printf("[%04X]", direccion);
+        int instr_len = ip - start_ip; // long total de instrucción
 
-    // imprime mnemónico
-    if (mnemonicos[codOp])
-        printf(" %s ", mnemonicos[codOp]);
-    else
-        printf("(OPC?? %02X) ", codOp);
+      
+        printf("[%04X] ", direccion);
 
-    // imprime operandos
-    if (opA.tipo != 0) {
-        imprimeOperando(opA);
-        if (opB.tipo != 0) {
-            printf(" , ");
+        // imprime instrucción en hex
+        for (int i = 0; i < instr_len; i++) {
+            printf("%02X ", (unsigned char)mv->memoria[start_ip + i]);
+        }
+        // relleno para alinear 
+        for (int i = instr_len; i < 8; i++) {
+            printf("   ");
+        }
+        printf(" | ");
+        // imprime mnemónico
+        if (mnemonicos[codOp])
+            printf(" %s ", mnemonicos[codOp]);
+        else
+            printf("(OPC?? %02X) ", codOp);
+
+        // imprime operandos
+        if (opA.tipo != 0) {
+            imprimeOperando(opA);
+            if (opB.tipo != 0) {
+                printf(" , ");
+                imprimeOperando(opB);
+            }
+        } else if (opB.tipo != 0) {
             imprimeOperando(opB);
         }
-    } else if (opB.tipo != 0) {
-        imprimeOperando(opB);
+
+        printf(";\n");
+
+        // si es STOP termina
+        if (codOp == 0x0F) {
+            break;
+        }
     }
 
-    printf("; \n");
-
-    // si es STOP
-    if (codOp == 0x0F) {
-        break;
-    }
+    printf("\n");
 }
-
-        printf("\n");
-}
-
 
 
 
