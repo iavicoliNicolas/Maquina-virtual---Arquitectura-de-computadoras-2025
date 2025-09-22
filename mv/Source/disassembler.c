@@ -1,3 +1,4 @@
+#include <stdio.h>
 #include <string.h>
 #include "mv.h"
 #include "disassembler.h"
@@ -66,99 +67,106 @@ const char* nombres_registros[32] = {
     [30] = NULL,
     [31] = NULL
 };
+extern const char* mnemonicos[32];
+extern const char* nombres_registros[32];
 
-//Lee 8 bits enteros
-static inline unsigned char r8(char *mem, int pos) // lee 8 bits
-{    return (unsigned char)mem[pos];
-}
-//lee 16 bits
-static inline unsigned short r16(char *mem, int pos) // lee 16 bits
-{   return (unsigned short)((unsigned char)mem[pos] | ((unsigned char)mem[pos+1] << 8));
+// === helpers ===
+static inline unsigned char r8(char *mem, int pos) {
+    return (unsigned char)mem[pos];
 }
 
-void disassembler(maquinaVirtual *mv)
-{
-    int base_cs, tam_cs, ip,direcccion,tipoA,tipoB,codOp;
+static inline unsigned short r16(char *mem, int pos) {
+    // big-endian
+    return (unsigned short)(((unsigned char)mem[pos] << 8) | (unsigned char)mem[pos+1]);
+}
+
+
+void disassembler(maquinaVirtual *mv) {
+    int base_cs, size_cs, end_cs, ip, direccion;
     unsigned char b0;
-    operando opA={0},opB={0};
+    int tipoA, tipoB, codOp;
+    operando opA = {0}, opB = {0};
 
+    base_cs = mv->tablaSegmentos[0][0];
+    size_cs = mv->tablaSegmentos[0][1];
+    end_cs  = base_cs + size_cs;
 
-    base_cs=mv->tablaSegmentos[0][0];
-    tam_cs=mv->tablaSegmentos[0][1];
+    
+       ip = base_cs;
+   while (ip < end_cs) {
+    int direccion = ip;
 
-    ip=base_cs;
-    while(ip< tam_cs)
-    {   direcccion=ip;
-        //primer byte de la instruccion
-        b0=r8(mv->memoria,ip++);
-        tipoA=(b0>>6)& (0x03); //tipo operando A
-        tipoB=(b0>>4)&(0x03);//tipo operando B 
-        codOp=b0 & 0x1F;
-        
-        ip+=decodificaOperando(mv,ip,tipoB,&opB);
-        ip+=decodificaOperando(mv,ip,tipoA,&opA);
-        
-        //imprime direccion
-        printf("[%04X]",direcccion);
+    // primer byte de la instrucción
+    b0 = r8(mv->memoria, ip++);
+    tipoB = (b0 >> 6) & 0x03; // bits 7–6
+    tipoA = (b0 >> 4) & 0x03; // bits 5–4
+    codOp = b0 & 0x1F;
 
-        //imprime mnemonico
-        if (mnemonicos[codOp])
-        {       printf(" %s ", mnemonicos[codOp]); }
-        else
-        {      printf("(codigo de operacion no definido: 0x%02X) ", codOp);} 
-         
-        //imprime operandos
-    printf("TopB= %d",opB.tipo);
-        if(opB.tipo!=0)
-        {  printf("111111");
-           if (opA.tipo!=0)
-           {   imprimeOperando(opA);
-               printf(" , ");
-               imprimeOperando(opB);
-           }
-           else 
-               imprimeOperando(opB); 
+    // decodificar operandos en orden inverso
+    ip += decodificaOperando(mv, ip, tipoB, &opB);
+    ip += decodificaOperando(mv, ip, tipoA, &opA);
 
+    // imprime dirección
+    printf("[%04X]", direccion);
+
+    // imprime mnemónico
+    if (mnemonicos[codOp])
+        printf(" %s ", mnemonicos[codOp]);
+    else
+        printf("(OPC?? %02X) ", codOp);
+
+    // imprime operandos
+    if (opA.tipo != 0) {
+        imprimeOperando(opA);
+        if (opB.tipo != 0) {
+            printf(" , ");
+            imprimeOperando(opB);
         }
+    } else if (opB.tipo != 0) {
+        imprimeOperando(opB);
+    }
 
+    printf("; \n");
+
+    // si es STOP
+    if (codOp == 0x0F) {
+        break;
+    }
+}
 
         printf("\n");
-    }
 }
 
-// Decodifica un operando desde memoria, devuelve bytes leídos
-int decodificaOperando(maquinaVirtual *mv, int pos, int tipo, operando *op) 
-{   unsigned char byte;
-    if (tipo == 0) { // Ninguno
-        op->tipo = 0;
-        return 0;
-    }
 
-    if (tipo == 1) { // Registro 
+
+
+int decodificaOperando(maquinaVirtual *mv, int pos, int tipo, operando *op) {
+    unsigned char byte;
+    if (tipo == 0) { op->tipo = 0; return 0; }
+
+    if (tipo == 1) { // Registro
         op->tipo = 1;
         byte = r8(mv->memoria, pos);
-        op->registro = byte & 0x1F;   
-        return 1; 
+        op->registro = byte & 0x1F;
+        return 1;
     }
-    if (tipo == 2) { // Inmediato 
+
+    if (tipo == 2) { // Inmediato
         op->tipo = 2;
-        op->desplazamiento = r16(mv->memoria, pos); // valor inmediato
-        return 2; 
+        op->desplazamiento = r16(mv->memoria, pos);
+        return 2;
     }
 
-    if (tipo == 3) { // Memoria 
+    if (tipo == 3) { // Memoria
         op->tipo = 3;
-
         byte = r8(mv->memoria, pos);
-        op->registro = byte & 0x1F;        // guardo el codigo del registro
-        op->desplazamiento = r16(mv->memoria, pos+1); // offset
-        return 3; // se leyeron 3 bytes (1 reg + 2 offset)
+        op->registro = byte & 0x1F;
+        op->desplazamiento = r16(mv->memoria, pos+1);
+        return 3;
     }
 
-    // Si no es un tipo válido
     return 0;
 }
-
 
 
 
