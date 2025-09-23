@@ -1,311 +1,179 @@
-#include "disassembler.h"
+#include <stdio.h>
 #include <string.h>
+#include "mv.h"
+#include "disassembler.h"
+#include "operando.h"
+#include "funciones.h"
+const char* mnemonicos[32] = {
+    [0x00] = "SYS",
+    [0x01] = "JMP",
+    [0x02] = "JZ",
+    [0x03] = "JP",
+    [0x04] = "JN",
+    [0x05] = "JNZ",
+    [0x06] = "JNP",
+    [0x07] = "JNN",
+    [0x08] = "NOT",
+    [0x0F] = "STOP",
+    [0x10] = "MOV",
+    [0x11] = "ADD",
+    [0x12] = "SUB",
+    [0x13] = "MUL",
+    [0x14] = "DIV",
+    [0x15] = "CMP",
+    [0x16] = "SHL",
+    [0x17] = "SHR",
+    [0x18] = "SAR",
+    [0x19] = "AND",
+    [0x1A] = "OR",
+    [0x1B] = "XOR",
+    [0x1C] = "SWAP",
+    [0x1D] = "LDL",
+    [0x1E] = "LDH",
+    [0x1F] = "RND"
+};
 
-void cargaVectorDisassembler(funcionDisassembler *v) {
-    //operaciones de 2 operandos
-    v[0x10] = imprimeMOV;
-    v[0x11] = imprimeADD;
-    v[0x12] = imprimeSUB;
-    v[0x13] = imprimeMUL;
-    v[0x14] = imprimeDIV;
-    v[0x15] = imprimeCMP;
-    v[0x16] = imprimeSHL;
-    v[0x17] = imprimeSHR;
-    v[0x18] = imprimeSAR;
-    v[0x19] = imprimeAND;
-    v[0x1A] = imprimeOR;
-    v[0x1B] = imprimeXOR;
-    v[0x1C] = imprimeSWAP;
-    v[0x1D] = imprimeLDL;
-    v[0x1E] = imprimeLDH;
-    v[0x1F] = imprimeRND;
-    //operaciones de 1 operandos
-    v[0x00] = imprimeSYS;
-    v[0x01] = imprimeJMP;
-    v[0x02] = imprimeJZ;
-    v[0x03] = imprimeJP;
-    v[0x04] = imprimeJN;
-    v[0x05] = imprimeJNZ;
-    v[0x06] = imprimeJNP;
-    v[0x07] = imprimeJNN;
-    v[0x08] = imprimeNOT;
-    //operaciones sin operandos
-    v[0x0F] = imprimeSTOP;
+const char* nombres_registros[32] = {
+    [0]  = "LAR",   
+    [1]  = "MAR",   
+    [2]  = "MBR",  
+    [3]  = "IP",    
+    [4]  = "OPC",   
+    [5]  = "OP1",   
+    [6]  = "OP2",   
+    [7]  = NULL,    
+    [8]  = NULL,    
+    [9]  = NULL,   
+    [10] = "EAX",   
+    [11] = "EBX",  
+    [12] = "ECX",  
+    [13] = "EDX", 
+    [14] = "EEX",   
+    [15] = "EFX",   
+    [16] = "AC",    
+    [17] = "CC",    
+    [18] = NULL,    
+    [19] = NULL,    
+    [20] = NULL,
+    [21] = NULL,
+    [22] = NULL,
+    [23] = NULL,
+    [24] = NULL,
+    [25] = NULL,
+    [26] = "CS",    
+    [27] = "DS",    
+    [28] = NULL,
+    [29] = NULL,
+    [30] = NULL,
+    [31] = NULL
+};
+extern const char* mnemonicos[32];
+extern const char* nombres_registros[32];
+
+// === helpers ===
+static inline unsigned char r8(char *mem, int pos) {
+    return (unsigned char)mem[pos];
 }
 
-void obtieneTAG(char reg,char segmento,char nombre[]) {
-    switch (reg){
-    case 0x00:strcpy(nombre,"LAR");
-        break;
-    case 0x01:strcpy(nombre,"MAR");
-        break;
-    case 0x02:strcpy(nombre,"MBR");
-        break;
-    case 0x03:strcpy(nombre,"IP");
-        break;
-    case 0x04:strcpy(nombre,"OPC");
-        break;
-    case 0x05:strcpy(nombre,"OP1");
-        break;
-    case 0x06:strcpy(nombre,"OP2");
-        break;
-    case 0x07:strcpy(nombre," ");
-        break;
-    case 0x08:strcpy(nombre," ");
-        break;
-    case 0x09:strcpy(nombre," ");
-        break;
-    case 0x0A:
-        switch (segmento){
-                case 0:strcpy(nombre,"EAX");
-                    break;
-                case 1:strcpy(nombre,"AL");
-                    break;
-                case 2:strcpy(nombre,"AH");
-                    break;
-                case 3:strcpy(nombre,"AX");
-                    break;
+static inline unsigned short r16(char *mem, int pos) {
+    // big-endian
+    return (unsigned short)(((unsigned char)mem[pos] << 8) | (unsigned char)mem[pos+1]);
+}
+
+
+void disassembler(maquinaVirtual *mv) {
+    int base_cs, size_cs, end_cs, ip;
+    unsigned char b0;
+    int tipoA, tipoB, codOp;
+    operando opA = {0}, opB = {0};
+
+    base_cs = mv->tablaSegmentos[0][0];
+    size_cs = mv->tablaSegmentos[0][1];
+    end_cs  = base_cs + size_cs;
+
+    ip = base_cs;
+    while (ip < end_cs) {
+        int direccion = ip;
+        int start_ip  = ip;   // para calcular bytes de instrucción
+
+        // primer byte de la instrucción
+        b0 = r8(mv->memoria, ip++);
+        tipoB = (b0 >> 6) & 0x03; // bits 7–6
+        tipoA = (b0 >> 4) & 0x03; // bits 5–4
+        codOp = b0 & 0x1F;
+
+        // decodificar operandos en orden inverso
+        ip += decodificaOperando(mv, ip, tipoB, &opB);
+        ip += decodificaOperando(mv, ip, tipoA, &opA);
+
+        int instr_len = ip - start_ip; // long total de instrucción
+
+      
+        printf("[%04X] ", direccion);
+
+        // imprime instrucción en hex
+        for (int i = 0; i < instr_len; i++) {
+            printf("%02X ", (unsigned char)mv->memoria[start_ip + i]);
         }
-        break;
-    case 0x0B:
-        switch (segmento){
-                case 0:strcpy(nombre,"EBX");
-                    break;
-                case 1:strcpy(nombre,"BL");
-                    break;
-                case 2:strcpy(nombre,"BH");
-                    break;
-                case 3:strcpy(nombre,"BX");
-                    break;
+        // relleno para alinear 
+        for (int i = instr_len; i < 8; i++) {
+            printf("   ");
         }
-        break;
-    case 0x0C:
-        switch (segmento){
-                case 0:strcpy(nombre,"ECX");
-                    break;
-                case 1:strcpy(nombre,"CL");
-                    break;
-                case 2:strcpy(nombre,"CH");
-                    break;
-                case 3:strcpy(nombre,"CX");
-                    break;
+        printf(" | ");
+        // imprime mnemónico
+        if (mnemonicos[codOp])
+            printf(" %s ", mnemonicos[codOp]);
+        else
+            printf("(OPC?? %02X) ", codOp);
+
+        // imprime operandos
+        if (opA.tipo != 0) {
+            imprimeOperando(opA);
+            if (opB.tipo != 0) {
+                printf(" , ");
+                imprimeOperando(opB);
+            }
+        } else if (opB.tipo != 0) {
+            imprimeOperando(opB);
         }
-        break;
-    case 0x0D:
-        switch (segmento){
-                case 0:strcpy(nombre,"EDX");
-                    break;
-                case 1:strcpy(nombre,"DL");
-                    break;
-                case 2:strcpy(nombre,"DH");
-                    break;
-                case 3:strcpy(nombre,"DX");
-                    break;
+
+        printf(";\n");
+
+        // si es STOP termina
+        if (codOp == 0x0F) {
+            break;
         }
-        break;
-    case 0x0E:
-        switch (segmento){
-            case 0:strcpy(nombre,"EEX");
-                break;
-            case 1:strcpy(nombre,"EL");
-                break;
-            case 2:strcpy(nombre,"EH");
-                break;
-            case 3:strcpy(nombre,"EX");
-                break;
-        }
-        break;
-    case 0x0F:
-        switch (segmento){
-                case 0:strcpy(nombre,"EFX");
-                    break;
-                case 1:strcpy(nombre,"FL");
-                    break;
-                case 2:strcpy(nombre,"FH");
-                    break;
-                case 3:strcpy(nombre,"FX");
-                    break;
-        }
-        break;
-    case 0x10:strcpy(nombre,"AC");
-        break;
-    case 0x11:strcpy(nombre,"CC");
-        break;
-    case 0x12:strcpy(nombre," ");
-        break;
-    case 0x13:strcpy(nombre," ");
-        break;
-    case 0x14:strcpy(nombre," ");
-        break;
-    case 0x15:strcpy(nombre," ");
-        break;
-    case 0x16:strcpy(nombre," ");
-        break;
-    case 0x17:strcpy(nombre," ");
-        break;
-    case 0x18:strcpy(nombre," ");
-        break;
-    case 0x19:strcpy(nombre," ");
-        break;
-    case 0x1A:strcpy(nombre,"CS");
-        break;
-    case 0x1B:strcpy(nombre,"DS");
-        break;
     }
+
+    printf("\n");
 }
 
-void imprimeMOV(InstruccionDisassembler disInstruccion) {
-    printf("MOV ");
-    imprimeOperando(disInstruccion.operandos[0]);
-    printf(",");
-    imprimeOperando(disInstruccion.operandos[1]);
-    printf("\n");
-}
-void imprimeADD(InstruccionDisassembler disInstruccion){
-    printf("ADD ");
-    imprimeOperando(disInstruccion.operandos[0]);
-    printf(",");
-    imprimeOperando(disInstruccion.operandos[1]);
-    printf("\n");
-}
-void imprimeSUB(InstruccionDisassembler disInstruccion){
-    printf("SUB ");
-    imprimeOperando(disInstruccion.operandos[0]);
-    printf(",");
-    imprimeOperando(disInstruccion.operandos[1]);
-    printf("\n");
-}
-void imprimeSWAP(InstruccionDisassembler disInstruccion){
-    printf("SWAP ");
-    imprimeOperando(disInstruccion.operandos[0]);
-    printf(",");
-    imprimeOperando(disInstruccion.operandos[1]);
-    printf("\n");
-}
-void imprimeMUL(InstruccionDisassembler disInstruccion){
-    printf("MUL ");
-    imprimeOperando(disInstruccion.operandos[0]);
-    printf(",");
-    imprimeOperando(disInstruccion.operandos[1]);
-    printf("\n");
-}
-void imprimeDIV(InstruccionDisassembler disInstruccion){
-    printf("DIV ");
-    imprimeOperando(disInstruccion.operandos[0]);
-    printf(",");
-    imprimeOperando(disInstruccion.operandos[1]);
-    printf("\n");
-}
-void imprimeCMP(InstruccionDisassembler disInstruccion){
-    printf("CMP ");
-    imprimeOperando(disInstruccion.operandos[0]);
-    printf(",");
-    imprimeOperando(disInstruccion.operandos[1]);
-    printf("\n");
-}
-void imprimeSHL(InstruccionDisassembler disInstruccion){
-    printf("SHL ");
-    imprimeOperando(disInstruccion.operandos[0]);
-    printf(",");
-    imprimeOperando(disInstruccion.operandos[1]);
-    printf("\n");
-}
-void imprimeSHR(InstruccionDisassembler disInstruccion){
-    printf("SHR ");
-    imprimeOperando(disInstruccion.operandos[0]);
-    printf(",");
-    imprimeOperando(disInstruccion.operandos[1]);
-    printf("\n");
-}
-void imprimeSHR(InstruccionDisassembler disInstruccion){
-    printf("SAR ");
-    imprimeOperando(disInstruccion.operandos[0]);
-    printf(",");
-    imprimeOperando(disInstruccion.operandos[1]);
-    printf("\n");
-}
-void imprimeAND(InstruccionDisassembler disInstruccion){
-    printf("AND ");
-    imprimeOperando(disInstruccion.operandos[0]);
-    printf(",");
-    imprimeOperando(disInstruccion.operandos[1]);
-    printf("\n");
-}
-void imprimeOR(InstruccionDisassembler disInstruccion){
-    printf("OR ");
-    imprimeOperando(disInstruccion.operandos[0]);
-    printf(",");
-    imprimeOperando(disInstruccion.operandos[1]);
-    printf("\n");
-}
-void imprimeXOR(InstruccionDisassembler disInstruccion){
-    printf("XOR ");
-    imprimeOperando(disInstruccion.operandos[0]);
-    printf(",");
-    imprimeOperando(disInstruccion.operandos[1]);
-    printf("\n");
-}
-void imprimeSYS(InstruccionDisassembler disInstruccion){
-    printf("SYS ");
-    imprimeOperando(disInstruccion.operandos[0]);
-    printf("\n");
-}
-void imprimeJMP(InstruccionDisassembler disInstruccion){
-    printf("JMP ");
-    imprimeOperando(disInstruccion.operandos[0]);
-    printf("\n");
-}
-void imprimeJZ(InstruccionDisassembler disInstruccion){
-    printf("JZ ");
-    imprimeOperando(disInstruccion.operandos[0]);
-    printf("\n");
-}
-void imprimeJP(InstruccionDisassembler disInstruccion){
-    printf("JP ");
-    imprimeOperando(disInstruccion.operandos[0]);
-    printf("\n");
-}
-void imprimeJN(InstruccionDisassembler disInstruccion){
-    printf("JN ");
-    imprimeOperando(disInstruccion.operandos[0]);
-    printf("\n");
-}
-void imprimeJNZ(InstruccionDisassembler disInstruccion){
-    printf("JNZ ");
-    imprimeOperando(disInstruccion.operandos[0]);
-    printf("\n");
-}
-void imprimeJNP(InstruccionDisassembler disInstruccion){
-    printf("JNP ");
-    imprimeOperando(disInstruccion.operandos[0]);
-    printf("\n");
-}
-void imprimeJNN(InstruccionDisassembler disInstruccion){
-    printf("JNN ");
-    imprimeOperando(disInstruccion.operandos[0]);
-    printf("\n");
-}
-void imprimeLDL(InstruccionDisassembler disInstruccion){
-    printf("LDL ");
-    imprimeOperando(disInstruccion.operandos[0]);
-    printf("\n");
-}
-void imprimeLDH(InstruccionDisassembler disInstruccion){
-    printf("LDH ");
-    imprimeOperando(disInstruccion.operandos[0]);
-    printf("\n");
-}
-void imprimeRND(InstruccionDisassembler disInstruccion){
-    printf("RND ");
-    imprimeOperando(disInstruccion.operandos[0]);
-    printf("\n");
-}
-void imprimeNOT(InstruccionDisassembler disInstruccion){
-    printf("NOT ");
-    imprimeOperando(disInstruccion.operandos[0]);
-    printf("\n");
-}
-void imprimeSTOP(InstruccionDisassembler disInstruccion){
-    printf("STOP ");
-    printf("\n");
+
+
+int decodificaOperando(maquinaVirtual *mv, int pos, int tipo, operando *op) {
+    unsigned char byte;
+    if (tipo == 0) { op->tipo = 0; return 0; }
+
+    if (tipo == 1) { // Registro
+        op->tipo = 1;
+        byte = r8(mv->memoria, pos);
+        op->registro = byte & 0x1F;
+        return 1;
+    }
+
+    if (tipo == 2) { // Inmediato
+        op->tipo = 2;
+        op->desplazamiento = r16(mv->memoria, pos);
+        return 2;
+    }
+
+    if (tipo == 3) { // Memoria
+        op->tipo = 3;
+        byte = r8(mv->memoria, pos);
+        op->registro = byte & 0x1F;
+        op->desplazamiento = r16(mv->memoria, pos+1);
+        return 3;
+    }
+
+    return 0;
 }
