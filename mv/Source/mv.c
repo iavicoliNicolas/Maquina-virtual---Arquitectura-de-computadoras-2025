@@ -215,6 +215,11 @@ void ejecutarMV(maquinaVirtual *mv) {
         int op[2];
         op[0] = mv->registros[OP1];
         op[1] = mv->registros[OP2];
+
+        setLAR(mv, mv->registros[DS], mv->registros[DS] & 0xFFFF); //actualizar LAR con el valor de DS
+        //cargar MAR y MBR si es necesario
+        setMAR(mv, 2, logicoAFisico(mv, mv->registros[MAR] & 0xFFFF));
+        setMBR(mv, getMem(mv, mv->registros[MAR]));
         //ejecutar la operacion
         v[operacion](mv, op);
  
