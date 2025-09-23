@@ -11,11 +11,11 @@ int getOpMem(maquinaVirtual *mv, operando op) {
 }
 
 //obtiene el valor del operando segun su tipo
-int getOp(maquinaVirtual *mv, operando op) {
+int getOp(maquinaVirtual *mv, int op) {
 
 }
 
-void setOp(maquinaVirtual *mv, operando op, int num) {
+void setOp(maquinaVirtual *mv, int op) { //OP1 | OP2
 
 }
 void recuperaOperandos(maquinaVirtual *mv, operando *operandos, int ip) {

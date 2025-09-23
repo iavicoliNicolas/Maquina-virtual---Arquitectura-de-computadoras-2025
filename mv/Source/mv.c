@@ -212,8 +212,11 @@ void ejecutarMV(maquinaVirtual *mv) {
             exit(EXIT_FAILURE);
         }
 
+        int op[2];
+        op[0] = mv->registros[OP1];
+        op[1] = mv->registros[OP2];
         //ejecutar la operacion
-        v[operacion](mv, operandos);
+        v[operacion](mv, op);
  
     }
     printf("\nEjecucion finalizada\n");

@@ -12,9 +12,9 @@ typedef struct  {
 
 int getOPReg(maquinaVirtual *mv, operando op);
 int getOPMem(maquinaVirtual *mv, operando op);
-int getOp(maquinaVirtual *mv, operando op);
-void setOp(maquinaVirtual *mv, operando op, int num);
-void recuperaOperandos(maquinaVirtual *mv, int *operandos,int ip);
+int getOp(maquinaVirtual *mv, int op);
+void setOp(maquinaVirtual *mv, int op);
+void recuperaOperandos(maquinaVirtual *mv, operando *operandos,int ip);
 void imprimeOperando(operando op);
 
 

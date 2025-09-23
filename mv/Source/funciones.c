@@ -84,22 +84,22 @@ void setCC(maquinaVirtual *mv, int resultado) {
 
 
 //funciones assembler
-void MOV(maquinaVirtual *mv, operando *op){
+void MOV(maquinaVirtual *mv, int *op){
     setOp(mv, op[1], getOp(mv, op[0]));
 }
-void ADD(maquinaVirtual *mv, operando *op){
+void ADD(maquinaVirtual *mv, int *op){
     setOp(mv, op[1], getOp(mv, op[1]) + getOp(mv, op[0]));
     setCC(mv, getOp(mv, op[1]));
 }
-void SUB(maquinaVirtual *mv, operando *op){
+void SUB(maquinaVirtual *mv, int *op){
     setOp(mv, op[1], getOp(mv, op[1]) - getOp(mv, op[0]));
     setCC(mv, getOp(mv, op[1]));
 }
-void MUL(maquinaVirtual *mv, operando *op){
+void MUL(maquinaVirtual *mv, int *op){
     setOp(mv, op[1], getOp(mv, op[1]) * getOp(mv, op[0]));
     setCC(mv, getOp(mv, op[1]));
 }
-void DIV(maquinaVirtual *mv, operando *op) {
+void DIV(maquinaVirtual *mv, int *op) {
     int aux = getOp(mv, op[1]);
     if ( aux == 0) {
         fprintf(stderr, "Error: Division por cero\n");
