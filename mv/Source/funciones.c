@@ -84,22 +84,22 @@ void setCC(maquinaVirtual *mv, int resultado) {
 
 
 //funciones assembler
-void MOV(maquinaVirtual *mv, operando *op){
+void MOV(maquinaVirtual *mv, int *op){
     setOp(mv, op[1], getOp(mv, op[0]));
 }
-void ADD(maquinaVirtual *mv, operando *op){
+void ADD(maquinaVirtual *mv, int *op){
     setOp(mv, op[1], getOp(mv, op[1]) + getOp(mv, op[0]));
     setCC(mv, getOp(mv, op[1]));
 }
-void SUB(maquinaVirtual *mv, operando *op){
+void SUB(maquinaVirtual *mv, int *op){
     setOp(mv, op[1], getOp(mv, op[1]) - getOp(mv, op[0]));
     setCC(mv, getOp(mv, op[1]));
 }
-void MUL(maquinaVirtual *mv, operando *op){
+void MUL(maquinaVirtual *mv, int *op){
     setOp(mv, op[1], getOp(mv, op[1]) * getOp(mv, op[0]));
     setCC(mv, getOp(mv, op[1]));
 }
-void DIV(maquinaVirtual *mv, operando *op) {
+void DIV(maquinaVirtual *mv, int *op) {
     int aux = getOp(mv, op[1]);
     if ( aux == 0) {
         fprintf(stderr, "Error: Division por cero\n");
@@ -109,43 +109,43 @@ void DIV(maquinaVirtual *mv, operando *op) {
     mv->registros[AC] = getOp(mv, op[1]) % getOp(mv, op[0]); //guardar el resto en AC
     setCC(mv, getOp(mv, op[1]));
 }
-void CMP(maquinaVirtual *mv, operando *op){
+void CMP(maquinaVirtual *mv, int *op){
     int resultado = getOp(mv, op[1]) - getOp(mv, op[0]);
     setCC(mv, resultado);
 }
-void SHL(maquinaVirtual *mv, operando *op){
+void SHL(maquinaVirtual *mv, int *op){
     setOp(mv, op[1], getOp(mv, op[1]) << getOp(mv, op[0]));
     setCC(mv, getOp(mv, op[1]));
 }
-void SAR(maquinaVirtual *mv, operando *op){
+void SAR(maquinaVirtual *mv, int *op){
     setOp(mv, op[1], getOp(mv, op[1]) >> getOp(mv, op[0]));
     setCC(mv, getOp(mv, op[1]));
 }
-void SHR(maquinaVirtual *mv, operando *op){
+void SHR(maquinaVirtual *mv, int *op){
     setOp(mv, op[1], (unsigned int)getOp(mv, op[1]) >> getOp(mv, op[0]));
     setCC(mv, getOp(mv, op[1]));
 }
-void AND(maquinaVirtual *mv, operando *op){
+void AND(maquinaVirtual *mv, int *op){
     setOp(mv, op[1], getOp(mv, op[1]) & getOp(mv, op[0]));
     setCC(mv, getOp(mv, op[1]));
 }
-void OR(maquinaVirtual *mv, operando *op){
+void OR(maquinaVirtual *mv, int *op){
     setOp(mv, op[1], getOp(mv, op[1]) | getOp(mv, op[0]));
     setCC(mv, getOp(mv, op[1]));
 }
-void XOR(maquinaVirtual *mv, operando *op){
+void XOR(maquinaVirtual *mv, int *op){
     setOp(mv, op[1], getOp(mv, op[1]) ^ getOp(mv, op[0]));
     setCC(mv, getOp(mv, op[1]));
 }
-void SWAP(maquinaVirtual *mv, operando *op){
+void SWAP(maquinaVirtual *mv, int *op){
     int temp = getOp(mv, op[0]);
     setOp(mv, op[0], getOp(mv, op[1]));
     setOp(mv, op[1], temp);
 }
-void RND(maquinaVirtual *mv, operando *op){
+void RND(maquinaVirtual *mv, int *op){
     setOp(mv, op[0], rand());
 }
-void SYS(maquinaVirtual *mv, operando *op){
+void SYS(maquinaVirtual *mv, int     *op){
     Sistema aux = getOp(mv, op[0]);
     funcionSys vecLlamadas[2];
     loadSYSOperationArray(vecLlamadas);
@@ -156,48 +156,48 @@ void SYS(maquinaVirtual *mv, operando *op){
         exit(EXIT_FAILURE);
     }
 }
-void JMP(maquinaVirtual *mv, operando *op){
+void JMP(maquinaVirtual *mv, int *op){
     mv->registros[IP] = getOp(mv, op[0]);
 }
-void JZ(maquinaVirtual *mv, operando *op){
+void JZ(maquinaVirtual *mv, int *op){
     if (mv->registros[CC] == 0) {
         mv->registros[IP] = getOp(mv, op[0]);
     }
 }
-void JP(maquinaVirtual *mv, operando *op){
+void JP(maquinaVirtual *mv, int *op){
     if (mv->registros[CC] > 0) {
         mv->registros[IP] = getOp(mv, op[0]);
     }
 }
-void JN(maquinaVirtual *mv, operando *op){
+void JN(maquinaVirtual *mv, int *op){
     if (mv->registros[CC] < 0) {
         mv->registros[IP] = getOp(mv, op[0]);
     }
 }
-void JNZ(maquinaVirtual *mv, operando *op){
+void JNZ(maquinaVirtual *mv, int *op){
     if (mv->registros[CC] != 0) {
         mv->registros[IP] = getOp(mv, op[0]);
     }
 }
-void JNP(maquinaVirtual *mv, operando *op){
+void JNP(maquinaVirtual *mv, int *op){
     if (mv->registros[CC] >= 0) {
         mv->registros[IP] = getOp(mv, op[0]);
     }
 }
-void JNN(maquinaVirtual *mv, operando *op){
+void JNN(maquinaVirtual *mv, int *op){
     if (mv->registros[CC] <= 0) {
         mv->registros[IP] = getOp(mv, op[0]);
     }
 }
-void LDL(maquinaVirtual *mv, operando *op){
+void LDL(maquinaVirtual *mv, int *op){
     setOp(mv, op[0], (getOp(mv, op[0]) & 0xFFFFFF00) | (getOp(mv, op[1]) & 0x000000FF));
 }
-void LDH(maquinaVirtual *mv, operando *op){
+void LDH(maquinaVirtual *mv, int *op){
     setOp(mv, op[0], (getOp(mv, op[0]) & 0xFFFF00FF) | ((getOp(mv, op[1]) & 0x000000FF) << 8));
 }
-void NOT(maquinaVirtual *mv, operando *op){
+void NOT(maquinaVirtual *mv, int *op){
     setOp(mv, op[0], ~getOp(mv, op[0]));
 }
-void STOP(maquinaVirtual *mv, operando *op){
+void STOP(maquinaVirtual *mv, int *op){
     exit(EXIT_SUCCESS);
 }
