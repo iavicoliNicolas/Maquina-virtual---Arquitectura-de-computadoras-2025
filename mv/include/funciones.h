@@ -12,7 +12,7 @@ typedef int Sistema; //auxiliar
 
 //funciones de la maquina virtual
 //tipo de funcion para operaciones de la maquina virtual
-typedef void (*Toperaciones)(maquinaVirtual *, operando *);
+typedef void (*Toperaciones)(maquinaVirtual *, int*);
 typedef void (*funcionSys)(maquinaVirtual *, Sistema);
 
 void cargaVF(Toperaciones *);
@@ -27,32 +27,32 @@ void setRegOP(maquinaVirtual *mv, int reg, operando valor, int tipo);
 
 void setCC(maquinaVirtual *mv, int resultado);
 //funciones de assembler
-void MOV(maquinaVirtual *mv, operando *op);
-void ADD(maquinaVirtual *mv, operando *op);
-void SUB(maquinaVirtual *mv, operando *op);
-void SWAP(maquinaVirtual *mv, operando *op);
-void MUL(maquinaVirtual *mv, operando *op);
-void DIV(maquinaVirtual *mv, operando *op);
-void CMP(maquinaVirtual *mv, operando *op);
-void SHL(maquinaVirtual *mv, operando *op);
-void SAR(maquinaVirtual *mv, operando *op);
-void SHR(maquinaVirtual *mv, operando *op);
-void AND(maquinaVirtual *mv, operando *op);
-void OR(maquinaVirtual *mv, operando *op);
-void XOR(maquinaVirtual *mv, operando *op);
-void RND(maquinaVirtual *mv, operando *op);
-void SYS(maquinaVirtual *mv, operando *op);
-void JMP(maquinaVirtual *mv, operando *op);
-void JZ(maquinaVirtual *mv, operando *op);
-void JP(maquinaVirtual *mv, operando *op);
-void JN(maquinaVirtual *mv, operando *op);
-void JNZ(maquinaVirtual *mv, operando *op);
-void JNP(maquinaVirtual *mv, operando *op);
-void JNN(maquinaVirtual *mv, operando *op);
-void LDL(maquinaVirtual *mv, operando *op);
-void LDH(maquinaVirtual *mv, operando *op);
-void NOT(maquinaVirtual *mv, operando *op);
-void STOP(maquinaVirtual *mv, operando *op);
+void MOV(maquinaVirtual *mv, int *op);
+void ADD(maquinaVirtual *mv, int *op);
+void SUB(maquinaVirtual *mv, int *op);
+void SWAP(maquinaVirtual *mv, int *op);;
+void MUL(maquinaVirtual *mv, int *op);
+void DIV(maquinaVirtual *mv, int *op);
+void CMP(maquinaVirtual *mv, int *op);
+void SHL(maquinaVirtual *mv, int *op);
+void SAR(maquinaVirtual *mv, int *op);
+void SHR(maquinaVirtual *mv, int *op);
+void AND(maquinaVirtual *mv, int *op);
+void OR(maquinaVirtual *mv, int *op);
+void XOR(maquinaVirtual *mv, int *op);
+void RND(maquinaVirtual *mv, int *op);
+void SYS(maquinaVirtual *mv, int *op);
+void JMP(maquinaVirtual *mv, int *op);
+void JZ(maquinaVirtual *mv, int *op);
+void JP(maquinaVirtual *mv, int *op);
+void JN(maquinaVirtual *mv, int *op);
+void JNZ(maquinaVirtual *mv, int *op);
+void JNP(maquinaVirtual *mv, int *op);
+void JNN(maquinaVirtual *mv, int *op);
+void LDL(maquinaVirtual *mv, int *op);
+void LDH(maquinaVirtual *mv, int *op);
+void NOT(maquinaVirtual *mv, int *op);
+void STOP(maquinaVirtual *mv, int *op);
 
 //funciones de la llamada sys
 void readSys(maquinaVirtual *mv,Sistema aux);

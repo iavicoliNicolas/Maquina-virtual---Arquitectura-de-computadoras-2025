@@ -44,11 +44,5 @@ void leerMV( maquinaVirtual *mv, FILE* arch);
 //ejecucion de la maquina virtual
 void ejecutarMV(maquinaVirtual *mv);
 
-//muestra del codigo ensamblador en pantalla
-void disassembler( maquinaVirtual *mv );
-
-
-
-void leerInstruccion(maquinaVirtual *mv, char *operacion, operando *op);
-
 #endif // MV_H
+

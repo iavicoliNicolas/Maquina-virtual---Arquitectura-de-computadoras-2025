@@ -28,22 +28,14 @@ int main(int argc, char *argv[]) {
     maquinaVirtual mv;
     leerMV(&mv, archivo);
     fclose(archivo);
-
-    //printf("CS:");
-    //muestraCS(mv);
-    
     
     if (argc >= 3 && strcmp(argv[2], "-d") == 0) 
     {
-        modo_disassembler = 1;
-    }
-
-    if (modo_disassembler) {
         printf("\n=== DESASSEMBLER ===\n");
         disassembler(&mv);   
-    } else {
-        ejecutarMV(&mv);     // solo ejecuta la MV
     }
+    
+    ejecutarMV(&mv);     // solo ejecuta la MV
 
     printf("\nFIN MAQUINA VIRTUAL\n");
 
@@ -52,13 +44,13 @@ int main(int argc, char *argv[]) {
 
 
 int verificarIntegridadVMX(FILE* arch) {
-    // Verificar que el archivo tiene al menos el tama�o m�nimo de cabecera
+    // Verificar que el archivo tiene al menos el tama o m nimo de cabecera
     fseek(arch, 0, SEEK_END);
     long file_size = ftell(arch);
     fseek(arch, 0, SEEK_SET);
 
-    if (file_size < 7) { // 5 (VMX25) + 1 (versi�n) + 2 (tama�o)
-        fprintf(stderr, "Error: Archivo demasiado peque�o\n");
+    if (file_size < 7) { // 5 (VMX25) + 1 (versi n) + 2 (tama o)
+        fprintf(stderr, "Error: Archivo demasiado peque o\n");
         return 0;
     }
 
