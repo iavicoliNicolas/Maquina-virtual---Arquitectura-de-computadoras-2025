@@ -1,11 +1,12 @@
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 #include "../include/mv.h"
 
 int verificarIntegridadVMX(FILE* arch);
 
 int main(int argc, char *argv[]) {
-
+    int modo_disassembler=0;
     if (argc < 2) {
         fprintf(stderr, "Uso: %s archivo.vmx [-d]\n", argv[0]);
         return 1;
@@ -31,14 +32,24 @@ int main(int argc, char *argv[]) {
     //printf("CS:");
     //muestraCS(mv);
     
-    ejecutarMV(&mv);
+    
+    if (argc >= 3 && strcmp(argv[2], "-d") == 0) 
+    {
+        modo_disassembler = 1;
+    }
 
-    disassembler(mv);
+    if (modo_disassembler) {
+        printf("\n=== DESASSEMBLER ===\n");
+        disassembler(&mv);   
+    } else {
+        ejecutarMV(&mv);     // solo ejecuta la MV
+    }
 
-    printf("\nFIN MAQUINA VIRTUAL");
+    printf("\nFIN MAQUINA VIRTUAL\n");
 
     return 0;
 }
+
 
 int verificarIntegridadVMX(FILE* arch) {
     // Verificar que el archivo tiene al menos el tama�o m�nimo de cabecera
