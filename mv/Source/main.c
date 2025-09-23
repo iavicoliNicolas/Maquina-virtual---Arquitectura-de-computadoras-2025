@@ -28,22 +28,14 @@ int main(int argc, char *argv[]) {
     maquinaVirtual mv;
     leerMV(&mv, archivo);
     fclose(archivo);
-
-    //printf("CS:");
-    //muestraCS(mv);
-    
     
     if (argc >= 3 && strcmp(argv[2], "-d") == 0) 
     {
-        modo_disassembler = 1;
-    }
-
-    if (modo_disassembler) {
         printf("\n=== DESASSEMBLER ===\n");
         disassembler(&mv);   
-    } else {
-        ejecutarMV(&mv);     // solo ejecuta la MV
     }
+    
+    ejecutarMV(&mv);     // solo ejecuta la MV
 
     printf("\nFIN MAQUINA VIRTUAL\n");
 
