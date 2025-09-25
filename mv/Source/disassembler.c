@@ -70,7 +70,7 @@ const char* nombres_registros[32] = {
 extern const char* mnemonicos[32];
 extern const char* nombres_registros[32];
 
-// === helpers ===
+
 static inline unsigned char r8(char *mem, int pos) {
     return (unsigned char)mem[pos];
 }

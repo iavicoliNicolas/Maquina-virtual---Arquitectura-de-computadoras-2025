@@ -43,6 +43,6 @@ void leerMV( maquinaVirtual *mv, FILE* arch);
 
 //ejecucion de la maquina virtual
 void ejecutarMV(maquinaVirtual *mv);
-
+int logicoAFisico(maquinaVirtual *mv, int direccionLogica);
 #endif // MV_H
 
