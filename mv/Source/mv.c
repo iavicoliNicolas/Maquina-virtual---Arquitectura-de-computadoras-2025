@@ -76,6 +76,12 @@ void leerMV(maquinaVirtual *mv, FILE* arch) {
 
     // 5. Cargar código en memoria (segmento de código)
     fread(mv->memoria, sizeof(char), tamano_codigo, arch);
+    for(int j=0;j<tamano_codigo;j++)
+    {
+        printf("%02X ", (unsigned char)mv->memoria[j]);
+    }
+    printf("\n");
+    
 
     // 6. Inicializar tabla de descriptores de segmentos
     // Entrada 0: Segmento de código
@@ -159,9 +165,9 @@ void muestraCS(maquinaVirtual mv) {
 void leerPrimerByte(maquinaVirtual *mv, char *operacion, char *tipoA, char *tipoB, int ip) {
 
 
-    *operacion = mv->memoria[logicoAFisico(mv, ip)] & 0x1F; // 5 bits menos significativos
-    *tipoA = (mv->memoria[logicoAFisico(mv, ip)] >> 4) & 0x03; // bits 5 y 6
-    *tipoB = (mv->memoria[logicoAFisico(mv, ip)] >> 6) & 0x03; // bits 7 y 8
+    *operacion = mv->memoria[ip] & 0x1F; // 5 bits menos significativos
+    *tipoA = (mv->memoria[ip] >> 4) & 0x03; // bits 5 y 6
+    *tipoB = (mv->memoria[ip] >> 6) & 0x03; // bits 7 y 8
 
 }
 
@@ -189,7 +195,7 @@ void ejecutarMV(maquinaVirtual *mv) {
     while( mv->registros[IP] < mv->tablaSegmentos[0][1] && mv->registros[IP] >= 0) //mientras IP < limite del segmento de codigo
     { 
         //leer instruccion apuntada por el registro IP
-        leerInstruccion( mv, &operacion, operandos );
+        leerInstruccion( mv, &operacion, operandos);
         //Almacenar el codigo de operacion en el registro OPC
         setReg(mv, OPC, operacion );
         printf("Valor de opc: %d\n", mv->registros[OPC]);
