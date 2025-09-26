@@ -104,7 +104,7 @@ void leerMV(maquinaVirtual *mv, FILE* arch) {
     mv->registros[IP] = 0x00000000;   // IP: comienza en inicio del c digo
     mv->registros[CC] = 0;                      // Condition Code inicial
 
-    printf("Programa cargado: %d bytes de código\n", tamano_codigo);
+    printf("Programa cargado: %d bytes de codigo\n", tamano_codigo);
 }
 
 /*
@@ -176,8 +176,6 @@ void leerInstruccion(maquinaVirtual *mv, char *operacion, operando *op) {
 
 
 void ejecutarMV(maquinaVirtual *mv) {
-
-
     char operacion;
     operando operandos[2];
     //cargar el vector de funciones
@@ -188,7 +186,7 @@ void ejecutarMV(maquinaVirtual *mv) {
     loadSYSOperationArray(vecLlamadas);
 
     //Ciclo de ejecucion
-    while( mv->registros[IP] < mv->tablaSegmentos[0][1] && mv->registros[IP] > 0) //mientras IP < limite del segmento de codigo
+    while( mv->registros[IP] < mv->tablaSegmentos[0][1] && mv->registros[IP] >= 0) //mientras IP < limite del segmento de codigo
     { 
         //leer instruccion apuntada por el registro IP
         leerInstruccion( mv, &operacion, operandos );

@@ -1,9 +1,9 @@
 #include <stdio.h>
 #include <string.h>
-#include "mv.h"
-#include "disassembler.h"
-#include "operando.h"
-#include "funciones.h"
+#include "../include/mv.h"
+#include "../include/disassembler.h"
+#include "../include/operando.h"
+#include "../include/funciones.h"
 const char* mnemonicos[32] = {
     [0x00] = "SYS",
     [0x01] = "JMP",

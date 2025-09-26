@@ -1,7 +1,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include "disassembler.h"
+#include "../include/disassembler.h"
 #include "../include/mv.h"
 
 int verificarIntegridadVMX(FILE* arch);
