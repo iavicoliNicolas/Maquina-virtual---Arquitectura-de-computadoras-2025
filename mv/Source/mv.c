@@ -164,6 +164,8 @@ void muestraCS(maquinaVirtual mv) {
 */
 
 void leerPrimerByte(maquinaVirtual *mv, char *operacion, char *tipoA, char *tipoB, int ip) {
+    printf("Valor de ip: %x\n", ip); //DEBUG
+    printf("valor que hay en la memoria en la posicion de ip: %x\n", mv->memoria[ip]); //DEBUG
     *operacion = mv->memoria[ip] & 0x1F; // 5 bits menos significativos
     *tipoA = (mv->memoria[ip] >> 4) & 0x03; // bits 5 y 6
     *tipoB = (mv->memoria[ip] >> 6) & 0x03; // bits 7 y 8
@@ -223,7 +225,6 @@ void ejecutarMV(maquinaVirtual *mv) {
         
         //ejecutar la operacion
         v[operacion](mv, op);
-        printf("registro edx = %x\n", mv->registros[EDX]); //DEBUG
     }
     printf("\nEjecución finalizada\n");
 }

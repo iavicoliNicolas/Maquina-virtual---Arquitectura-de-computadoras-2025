@@ -87,8 +87,6 @@ void setOp(maquinaVirtual *mv, int op, int num) { //OP1 | OP2
             break;
         case 1: { //registro
             mv->registros[getReg(mv, op)] = num; 
-            printf("decime que registro es el que traigo aca %x\n", getReg(mv, op)); //DEBUG
-            printf("valor seteado: %x\n", mv->registros[getReg(mv, op)]); //DEBUG
             break;
         }
         case 2: //inmediato
