@@ -162,6 +162,7 @@ void muestraCS(maquinaVirtual mv) {
     printf("\nRegistro CS: 0x%08X\n", mv.registros[26]);
 }
 */
+
 void leerPrimerByte(maquinaVirtual *mv, char *operacion, char *tipoA, char *tipoB, int ip) {
     *operacion = mv->memoria[ip] & 0x1F; // 5 bits menos significativos
     *tipoA = (mv->memoria[ip] >> 4) & 0x03; // bits 5 y 6
@@ -190,6 +191,7 @@ void ejecutarMV(maquinaVirtual *mv) {
     //Ciclo de ejecucion
     while( mv->registros[IP] < mv->tablaSegmentos[0][1] && mv->registros[IP] >= 0) //mientras IP < limite del segmento de codigo
     { 
+        printf("\n--- Ejecucion de instruccion en IP=0x%04X ---\n", mv->registros[IP]);
         //leer instruccion apuntada por el registro IP
         leerInstruccion( mv, &operacion, operandos);
         //Almacenar el codigo de operacion en el registro OPC
@@ -221,7 +223,7 @@ void ejecutarMV(maquinaVirtual *mv) {
         
         //ejecutar la operacion
         v[operacion](mv, op);
- 
+        printf("registro edx = %x\n", mv->registros[EDX]); //DEBUG
     }
     printf("\nEjecución finalizada\n");
 }
