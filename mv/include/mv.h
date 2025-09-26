@@ -17,6 +17,12 @@
 #define OPC 4
 #define OP1 5
 #define OP2 6
+#define EAX 10
+#define EBX 11
+#define ECX 12
+#define EDX 13
+#define EEX 14
+#define EFX 15
 
 #define AC 16
 #define CC 17

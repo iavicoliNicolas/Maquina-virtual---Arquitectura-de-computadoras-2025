@@ -163,12 +163,9 @@ void muestraCS(maquinaVirtual mv) {
 }
 */
 void leerPrimerByte(maquinaVirtual *mv, char *operacion, char *tipoA, char *tipoB, int ip) {
-
-
     *operacion = mv->memoria[ip] & 0x1F; // 5 bits menos significativos
     *tipoA = (mv->memoria[ip] >> 4) & 0x03; // bits 5 y 6
     *tipoB = (mv->memoria[ip] >> 6) & 0x03; // bits 7 y 8
-
 }
 
 void leerInstruccion(maquinaVirtual *mv, char *operacion, operando *op) {
@@ -179,7 +176,6 @@ void leerInstruccion(maquinaVirtual *mv, char *operacion, operando *op) {
     leerPrimerByte(mv, operacion, &op[0].tipo, &op[1].tipo, ip);
 
 }
-
 
 void ejecutarMV(maquinaVirtual *mv) {
     char operacion;
@@ -198,7 +194,7 @@ void ejecutarMV(maquinaVirtual *mv) {
         leerInstruccion( mv, &operacion, operandos);
         //Almacenar el codigo de operacion en el registro OPC
         setReg(mv, OPC, operacion );
-        printf("Valor de opc: %d\n", mv->registros[OPC]);
+        printf("Valor de opc: %x\n", mv->registros[OPC]);
 
         
         recuperaOperandos(mv, operandos, mv->registros[IP]);
@@ -208,7 +204,6 @@ void ejecutarMV(maquinaVirtual *mv) {
         //Ubicar en el registro IP la proxima instruccion a ejecutar
         setReg(mv, IP, mv->registros[IP] + 1 + (operandos[0].tipo != 0) + (operandos[1].tipo != 0));
         //Realizar la operacion indicada por el codigo de operacion
-
 
         if (operacion < 0 || operacion >= 32) {
             fprintf(stderr, "Error: Operacion invalida: %d\n", operacion);
@@ -223,6 +218,7 @@ void ejecutarMV(maquinaVirtual *mv) {
         //cargar MAR y MBR si es necesario
         setMAR(mv, 2, logicoAFisico(mv, mv->registros[MAR] & 0xFFFF));
         setMBR(mv, getMem(mv, mv->registros[MAR]));
+        
         //ejecutar la operacion
         v[operacion](mv, op);
  

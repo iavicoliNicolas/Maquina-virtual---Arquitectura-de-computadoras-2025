@@ -7,13 +7,10 @@
 #include <string.h>
 
 
-typedef int Sistema; //auxiliar 
-
-
 //funciones de la maquina virtual
 //tipo de funcion para operaciones de la maquina virtual
 typedef void (*Toperaciones)(maquinaVirtual *, int*);
-typedef void (*funcionSys)(maquinaVirtual *, Sistema);
+typedef void (*funcionSys)(maquinaVirtual *, int);
 
 void cargaVF(Toperaciones *);
 void loadSYSOperationArray(funcionSys *vecLlamadas);
@@ -55,8 +52,8 @@ void NOT(maquinaVirtual *mv, int *op);
 void STOP(maquinaVirtual *mv, int *op);
 
 //funciones de la llamada sys
-void readSys(maquinaVirtual *mv,Sistema aux);
-void writeSys(maquinaVirtual *mv,Sistema aux);
+void readSys(maquinaVirtual *mv,int aux);
+void writeSys(maquinaVirtual *mv,int aux);
 
 void ejecutarOperacion(maquinaVirtual *mv, int codigo, operando *op);
 #endif // FUNCIOONES_H
