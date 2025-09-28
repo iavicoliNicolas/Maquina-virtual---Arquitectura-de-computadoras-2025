@@ -193,6 +193,7 @@ void ejecutarMV(maquinaVirtual *mv) {
     //Ciclo de ejecucion
     while( mv->registros[IP] < mv->tablaSegmentos[0][1] && mv->registros[IP] >= 0) //mientras IP < limite del segmento de codigo
     { 
+        printf("\n=============Ciclo================\n");
         printf("\n--- Ejecucion de instruccion en IP=0x%04X ---\n", mv->registros[IP]);
         //leer instruccion apuntada por el registro IP
         leerInstruccion( mv, &operacion, operandos);

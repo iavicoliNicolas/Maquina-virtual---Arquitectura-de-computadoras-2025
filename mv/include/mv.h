@@ -31,7 +31,7 @@
 #define DS 27
 
 typedef struct maquinaVirtual {
-    char memoria[MAX_MEM];
+    unsigned char memoria[MAX_MEM];
     int registros[MAX_REG];
     int tablaSegmentos[MAX_SEG][2];
 } maquinaVirtual;
