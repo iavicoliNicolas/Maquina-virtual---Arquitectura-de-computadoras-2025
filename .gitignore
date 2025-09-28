@@ -1,8 +1,4 @@
 # Directorios de build de Code::Blocks
-/bin/
-/obj/
-/.objs/
-
 /.vscode/
 
 # Archivos específicos de Code::Blocks
@@ -11,7 +7,6 @@
 *.workspace
 
 # Archivos ejecutables
-*.exe
 *.app
 *.out
 
