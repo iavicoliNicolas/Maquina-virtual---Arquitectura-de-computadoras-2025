@@ -19,7 +19,7 @@ void setOp(maquinaVirtual *mv, int op, int num);
 void recuperaOperandos(maquinaVirtual *mv, operando *operandos,int ip);
 int getMem(maquinaVirtual *mv, int op);
 void imprimeOperando(operando op);
-int decodificaOperando(maquinaVirtual *mv, int pos, int tipo, operando *op);
+int decodificaOperando(maquinaVirtual mv, int pos, int tipo, operando *op);
 
 
 

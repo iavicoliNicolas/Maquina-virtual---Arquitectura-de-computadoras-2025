@@ -29,13 +29,13 @@ int main(int argc, char *argv[]) {
     maquinaVirtual mv;
     leerMV(&mv, archivo);
     fclose(archivo);
-    
-    if (argc >= 3 && strcmp(argv[2], "-d") == 0) 
+
+    if (argc >= 3 && strcmp(argv[2], "-d") == 0)
     {
         printf("\n=== DESASSEMBLER ===\n");
-        disassembler(&mv);   
+        disassembler(mv);
     }
-    
+
     ejecutarMV(&mv);     // solo ejecuta la MV
 
     printf("\nFIN MAQUINA VIRTUAL\n");

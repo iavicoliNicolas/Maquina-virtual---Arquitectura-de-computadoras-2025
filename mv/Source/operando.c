@@ -32,11 +32,11 @@ int getMem(maquinaVirtual *mv, int op) {
 
     //extraer registro y desplazamiento de op
     int reg = op & 0xFF;
-    int desplazamiento = op & 0xFFFF;
-
+    int desplazamiento = (op & 0x00FFFF00) >> 8;
+ 
     //calcular la direccion efectiva
-    int dirL = mv->registros[reg] + desplazamiento;
-    int dirF = logicoAFisico(mv, dirL);
+    int dirF = mv->registros[reg] + desplazamiento; 
+
 
     //leer el valor de memoria (2 bytes)
     if (dirF < 0 || dirF + 1 >= MAX_MEM) {
@@ -112,15 +112,21 @@ void recuperaOperandos(maquinaVirtual *mv, operando *operandos, int ip) {
     {
         if (operandos[i].tipo != 0) { 
             ip++;
+            auxInt = 0;
+            operandos[i].registro = -1;
+            operandos[i].desplazamiento = -1;
             if (operandos[i].tipo == 1) { //si es de registro
+
                 aux = mv->memoria[ip];
                 operandos[i].registro = aux;
+                operandos[i].desplazamiento = -1;
     
             } else if (operandos[i].tipo == 2) { //si es inmediato
 
-                auxInt |= mv->memoria[ip];
-                auxInt |= mv->memoria[ip + 1] & 0x00FF;
+                auxInt |= mv->memoria[ip++];
+                auxInt |= mv->memoria[ip] & 0x00FF;
                 operandos[i].desplazamiento = auxInt;
+                operandos[i].registro = -1;
     
             } else if (operandos[i].tipo == 3) { //si es de memoria
     
@@ -128,14 +134,11 @@ void recuperaOperandos(maquinaVirtual *mv, operando *operandos, int ip) {
                 aux = aux & 0x0F;
                 operandos[i].registro = aux;
                 ip++;
-                auxInt |= mv->memoria[ip];
-                auxInt |= mv->memoria[ip + 1] & 0x00FF;
+                auxInt |= mv->memoria[ip++];
+                auxInt |= mv->memoria[ip] & 0x00FF;
                 operandos[i].desplazamiento = auxInt;
     
             }
-        } else {
-            operandos[i].registro = -1;
-            operandos[i].desplazamiento = -1;
         } 
     }
     if(operandos[0].tipo == 0){
@@ -145,8 +148,7 @@ void recuperaOperandos(maquinaVirtual *mv, operando *operandos, int ip) {
     }
     for(int i=0;i<2;i++){
         printf("Registro: %x\n", operandos[i].registro);
-    }
-        
+    }     
 }
 
 void imprimeOperando(operando op) {

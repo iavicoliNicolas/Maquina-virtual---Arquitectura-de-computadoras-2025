@@ -16,6 +16,8 @@ int corrigeSize(int size)
 // Convierte una dirección lógica a una dirección física
 int logicoAFisico(maquinaVirtual *mv, int direccionLogica) {
 
+    printf("Direccion logica: 0x%08X\n", direccionLogica);
+
     int segmento = (direccionLogica >> 16) & 0xFFFF;
     int desplazamiento = direccionLogica & 0xFFFF;
 
@@ -43,13 +45,13 @@ void setReg(maquinaVirtual *mv, int reg, int valor) {
 
 void leerMV(maquinaVirtual *mv, FILE* arch) {
 
-    char cabecera[5];
+    char cabecera[6];
     unsigned char version;
     unsigned short int tamano_codigo;
 
     // 1. Leer cabecera del archivo VMX
     fread(cabecera, sizeof(char), 5, arch);
-    cabecera[5] = '\0'; // Null-terminate para comparación
+    cabecera[6] = '\0'; // Null-terminate para comparación
 
     // Verificar identificador "VMX25"
     if (strcmp(cabecera, "VMX25") != 0) {
@@ -69,19 +71,19 @@ void leerMV(maquinaVirtual *mv, FILE* arch) {
     tamano_codigo = corrigeSize(tamano_codigo);
 
     // 4. Verificar que el código cabe en memoria
-    if (tamano_codigo > 16384) {
+    if (tamano_codigo > MAX_MEM) {
         fprintf(stderr, "Error: Código demasiado grande (%d bytes)\n", tamano_codigo);
         exit(EXIT_FAILURE);
     }
 
     // 5. Cargar código en memoria (segmento de código)
     fread(mv->memoria, sizeof(char), tamano_codigo, arch);
-    for(int j=0;j<tamano_codigo;j++)
+    for( int j=0; j <= tamano_codigo; j++)
     {
         printf("%02X ", (unsigned char)mv->memoria[j]);
     }
     printf("\n");
-    
+
 
     // 6. Inicializar tabla de descriptores de segmentos
     // Entrada 0: Segmento de código
@@ -113,7 +115,7 @@ void leerMV(maquinaVirtual *mv, FILE* arch) {
     printf("Programa cargado: %d bytes de codigo\n", tamano_codigo);
 }
 
-/*
+
 void muestraCS(maquinaVirtual mv) {
     printf("=== SEGMENTO DE CÓDIGO (CS) ===\n");
 
@@ -161,27 +163,23 @@ void muestraCS(maquinaVirtual mv) {
 
     printf("\nRegistro CS: 0x%08X\n", mv.registros[26]);
 }
-*/
 
-void leerPrimerByte(maquinaVirtual *mv, char *operacion, char *tipoA, char *tipoB, int ip) {
-    printf("Valor de ip: %x\n", ip); //DEBUG
-    printf("valor que hay en la memoria en la posicion de ip: %x\n", mv->memoria[ip]); //DEBUG
-    *operacion = mv->memoria[ip] & 0x1F; // 5 bits menos significativos
-    *tipoA = (mv->memoria[ip] >> 4) & 0x03; // bits 5 y 6
-    *tipoB = (mv->memoria[ip] >> 6) & 0x03; // bits 7 y 8
-}
 
-void leerInstruccion(maquinaVirtual *mv, char *operacion, operando *op) {
+
+void leerInstruccion(maquinaVirtual *mv, unsigned char *operacion, operando *operandos) {
 
     //consigo la direccion fisica de la instruccion
-    int ip = logicoAFisico(mv, mv->registros[IP]); 
-    //leo el primer byte de la instruccion
-    leerPrimerByte(mv, operacion, &op[0].tipo, &op[1].tipo, ip);
+    int ip = logicoAFisico(mv, mv->registros[IP]);
+
+    *operacion = (unsigned char)mv->memoria[ip] & 0x1F; // 5 bits menos significativos
+    operandos[0].tipo = (mv->memoria[ip] >> 4) & 0x03; // bits 5 y 6
+    operandos[1].tipo = (mv->memoria[ip] >> 6) & 0x03; // bits 7 y 8
 
 }
 
 void ejecutarMV(maquinaVirtual *mv) {
-    char operacion;
+
+    unsigned char operacion = 0;
     operando operandos[2];
     //cargar el vector de funciones
     Toperaciones v[32];
@@ -191,43 +189,50 @@ void ejecutarMV(maquinaVirtual *mv) {
     loadSYSOperationArray(vecLlamadas);
 
     //Ciclo de ejecucion
+    printf("\n=== INICIO EJECUCION MAQUINA VIRTUAL ===\n");
+    //muestraCS(*mv);
     while( mv->registros[IP] < mv->tablaSegmentos[0][1] && mv->registros[IP] >= 0) //mientras IP < limite del segmento de codigo
-    { 
+    {
         printf("\n=============Ciclo================\n");
         printf("\n--- Ejecucion de instruccion en IP=0x%04X ---\n", mv->registros[IP]);
         //leer instruccion apuntada por el registro IP
         leerInstruccion( mv, &operacion, operandos);
+
         //Almacenar el codigo de operacion en el registro OPC
         setReg(mv, OPC, operacion );
-        printf("Valor de opc: %x\n", mv->registros[OPC]);
 
-        
+        //Recuperar los operandos de la instruccion y almacenarlos en el arreglo operandos
         recuperaOperandos(mv, operandos, mv->registros[IP]);
+        printf("Operando 1: Tipo=%d, Registro=%d, Desplazamiento=%d\n", operandos[0].tipo, operandos[0].registro, operandos[0].desplazamiento);
+        printf("Operando 2: Tipo=%d, Registro=%d, Desplazamiento=%d\n", operandos[1].tipo, operandos[1].registro, operandos[1].desplazamiento);
+        //printf("Operacion: %d\n", operacion);
+
         //Guardar en los registros OP1 y OP2 los operandos de la instruccion
         setRegOP(mv, OP1, operandos[0], operandos[0].tipo);
         setRegOP(mv, OP2, operandos[1], operandos[1].tipo);
-        //Ubicar en el registro IP la proxima instruccion a ejecutar
-        setReg(mv, IP, mv->registros[IP] + 1 + (operandos[0].tipo != 0) + (operandos[1].tipo != 0));
-        //Realizar la operacion indicada por el codigo de operacion
+        printf("op1 y op2 cargados en registros OP1 y OP2\n");
+        printf("OP1: 0x%08X, OP2: 0x%08X\n", mv->registros[OP1], mv->registros[OP2]);
 
-        if (operacion < 0 || operacion >= 32) {
-            fprintf(stderr, "Error: Operacion invalida: %d\n", operacion);
-            exit(EXIT_FAILURE);
-        }
+        //Ubicar en el registro IP la proxima instruccion a ejecutar
+        setReg(mv, IP, mv->registros[IP] + 1 + operandos[0].tipo + operandos[1].tipo);
 
         int op[2];
         op[0] = mv->registros[OP1];
         op[1] = mv->registros[OP2];
 
-        setLAR(mv, mv->registros[DS], mv->registros[DS] & 0xFFFF); //actualizar LAR con el valor de DS
-        //cargar MAR y MBR si es necesario
-        setMAR(mv, 2, logicoAFisico(mv, mv->registros[MAR] & 0xFFFF));
-        setMBR(mv, getMem(mv, mv->registros[MAR]));
-        
-        //ejecutar la operacion
-        v[operacion](mv, op);
+        if (operacion < 0 || operacion >= 32) {
+            fprintf(stderr, "Error: Operacion invalida: %d\n", operacion);
+            exit(EXIT_FAILURE);
+        } else {
+            //ejecutar la operacion
+            //printf("Ejecutando operacion %d\n", (int)operacion);
+            v[operacion](mv, op);
+        }
+        printf("Registros despues de la operacion:\n");
+        printf("EAX: 0x%08X, EBX: 0x%08X, ECX: 0x%08X, EDX: 0x%08X\n", mv->registros[EAX], mv->registros[EBX], mv->registros[ECX], mv->registros[EDX]);
+        scanf("%*c"); //espera a que el usuario presione enter para continuar
     }
-    printf("\nEjecución finalizada\n");
+    printf("\nEjecucion finalizada\n");
 }
 
 

@@ -4,6 +4,7 @@
 #include "../include/disassembler.h"
 #include "../include/operando.h"
 #include "../include/funciones.h"
+
 const char* mnemonicos[32] = {
     [0x00] = "SYS",
     [0x01] = "JMP",
@@ -81,14 +82,14 @@ static inline unsigned short r16(char *mem, int pos) {
 }
 
 
-void disassembler(maquinaVirtual *mv) {
+void disassembler(maquinaVirtual mv) {
     int base_cs, size_cs, end_cs, ip;
     unsigned char b0;
     int tipoA, tipoB, codOp;
     operando opA = {0}, opB = {0};
 
-    base_cs = mv->tablaSegmentos[0][0];
-    size_cs = mv->tablaSegmentos[0][1];
+    base_cs = mv.tablaSegmentos[0][0];
+    size_cs = mv.tablaSegmentos[0][1];
     end_cs  = base_cs + size_cs;
 
     ip = base_cs;
@@ -97,7 +98,7 @@ void disassembler(maquinaVirtual *mv) {
         int start_ip  = ip;   // para calcular bytes de instrucción
 
         // primer byte de la instrucción
-        b0 = r8(mv->memoria, ip++);
+        b0 = r8(mv.memoria, ip++);
         tipoB = (b0 >> 6) & 0x03; // bits 7–6
         tipoA = (b0 >> 4) & 0x03; // bits 5–4
         codOp = b0 & 0x1F;
@@ -113,7 +114,7 @@ void disassembler(maquinaVirtual *mv) {
 
         // imprime instrucción en hex
         for (int i = 0; i < instr_len; i++) {
-            printf("%02X ", (unsigned char)mv->memoria[start_ip + i]);
+            printf("%02X ", (unsigned char)mv.memoria[start_ip + i]);
         }
         // relleno para alinear 
         for (int i = instr_len; i < 8; i++) {
@@ -141,6 +142,7 @@ void disassembler(maquinaVirtual *mv) {
 
         // si es STOP termina
         if (codOp == 0x0F) {
+            printf("STOP ");
             break;
         }
     }
@@ -150,28 +152,28 @@ void disassembler(maquinaVirtual *mv) {
 
 
 
-int decodificaOperando(maquinaVirtual *mv, int pos, int tipo, operando *op) {
+int decodificaOperando(maquinaVirtual mv, int pos, int tipo, operando *op) {
     unsigned char byte;
     if (tipo == 0) { op->tipo = 0; return 0; }
 
     if (tipo == 1) { // Registro
         op->tipo = 1;
-        byte = r8(mv->memoria, pos);
+        byte = r8(mv.memoria, pos);
         op->registro = byte & 0x1F;
         return 1;
     }
 
     if (tipo == 2) { // Inmediato
         op->tipo = 2;
-        op->desplazamiento = r16(mv->memoria, pos);
+        op->desplazamiento = r16(mv.memoria, pos);
         return 2;
     }
 
     if (tipo == 3) { // Memoria
         op->tipo = 3;
-        byte = r8(mv->memoria, pos);
+        byte = r8(mv.memoria, pos);
         op->registro = byte & 0x1F;
-        op->desplazamiento = r16(mv->memoria, pos+1);
+        op->desplazamiento = r16(mv.memoria, pos+1);
         return 3;
     }
 

@@ -102,6 +102,7 @@ void MUL(maquinaVirtual *mv, int *op){
 }
 void DIV(maquinaVirtual *mv, int *op) {
     int aux = getOp(mv, op[1]);
+    printf("---->divisor=%d",aux);///--------------------------------------------------------------
     if ( aux == 0) {
         fprintf(stderr, "Error: Division por cero\n");
         exit(EXIT_FAILURE);
@@ -150,10 +151,10 @@ void RND(maquinaVirtual *mv, int *op){
 void SYS(maquinaVirtual *mv, int *op) {
     // Obtener el número de syscall del operando inmediato
     int llamada = getOp(mv, op[0]); // Asumo que getOp devuelve el número
-    
+
     funcionSys vecLlamadas[3];
     loadSYSOperationArray(vecLlamadas);
-    
+
     if (llamada >= 1 && llamada <= 2) {
         vecLlamadas[llamada](mv, llamada);
     } else {
@@ -210,26 +211,23 @@ void readSys(maquinaVirtual *mv, int arg) {
     // Obtener parámetros de los registros según la documentación
     int direccion_edx = mv->registros[EDX];
     int modo_eax = mv->registros[EAX] & 0xFF; // Modo en AL (byte bajo de EAX)
-    
+
     // ECX: bytes menos significativos = cantidad de celdas (CL)
     //       bytes más significativos = tamanio de celdas (CH)
     int cantidad_celdas = mv->registros[ECX] & 0xFF;        // CL
     int tamanio_celda = (mv->registros[ECX] >> 8) & 0xFF;    // CH
-    
+
     // Convertir dirección lógica a física
     int dir_fisica_base = logicoAFisico(mv, direccion_edx);
-    
-    printf("READ: dir_base=0x%04X, celdas=%d, tamanio=%d, modo=0x%02X\n",
-           dir_fisica_base, cantidad_celdas, tamanio_celda, modo_eax);
-    
+
     // Procesar cada celda
     int i;
     for (i = 0; i < cantidad_celdas; i++) {
         int dir_actual = dir_fisica_base + (i * tamanio_celda);
-        
+
         // Mostrar prompt con dirección física (4 dígitos hex)
         printf("[%04X]: ", dir_actual);
-        
+
         // Leer según el modo habilitado
         if (modo_eax & 0x01) { // Decimal (bit 0)
             leerYAlmacenarDecimal(mv, dir_actual, tamanio_celda);
@@ -307,31 +305,28 @@ void writeSys(maquinaVirtual *mv, int arg) {
     int modo_eax = mv->registros[EAX];
     int cantidad_celdas = mv->registros[ECX] & 0xFFFF;
     int tamanio_celda = (mv->registros[ECX] >> 8) & 0xFFFF;
-    
+
     // Convertir dirección lógica a física
     int dir_fisica_base = logicoAFisico(mv, direccion_edx);
-    
-    printf("WRITE: dir_base=0x%04X, celdas=%d, tamanio=%d, modo=0x%02X\n",
-           dir_fisica_base, cantidad_celdas, tamanio_celda, modo_eax);
-    
+
     // Escribir cada celda
     int i;
     for (i = 0; i < cantidad_celdas; i++) {
         int dir_actual = dir_fisica_base + (i * tamanio_celda);
-        
+
         // Mostrar prompt con dirección física
         printf("[%04X]: ", dir_actual);
-        
+
         // Leer valor de memoria (big-endian)
         int valor = 0;
         int j;
         for (j = 0; j < tamanio_celda; j++) {
             valor = (valor << 8) | (mv->memoria[dir_actual + j] & 0xFF);
         }
-        
+
         // Mostrar según los modos habilitados
         int modos_mostrados = 0;
-        
+
         if (modo_eax & 0x10) { // Binario (bit 4)
             mostrarBinario(valor, tamanio_celda);
             modos_mostrados++;
@@ -360,7 +355,7 @@ void writeSys(maquinaVirtual *mv, int arg) {
             printf("%d", valor);
             modos_mostrados++;
         }
-        
+
         printf("\n");
     }
 }
