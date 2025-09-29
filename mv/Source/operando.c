@@ -18,7 +18,8 @@ int getReg(maquinaVirtual *mv, int op) {
 //obtiene el valor de un operando inmediato
 int getInm(maquinaVirtual *mv, int op) {
     //extraer desplazamiento de op
-    int desplazamiento = op & 0xFFFF;
+    int desplazamiento = 0;
+    desplazamiento = op & 0xFFFF;
     //signo extendido si es negativo
     if (desplazamiento & 0x8000) {
         desplazamiento |= 0xFFFF0000;
@@ -31,20 +32,22 @@ int getMem(maquinaVirtual *mv, int op) {
     int valor = 0;
 
     //extraer registro y desplazamiento de op
-    int reg = op & 0xFF;
-    int desplazamiento = (op & 0x00FFFF00) >> 8;
+    int reg = getReg(mv, op);
+    int desplazamiento = getInm(mv, op);
  
     //calcular la direccion efectiva
-    int dirF = mv->registros[reg] + desplazamiento; 
-
+    int dirL = mv->registros[reg] + desplazamiento; 
+    int dirF = logicoAFisico(mv, dirL); //convertir direccion logica a fisica
 
     //leer el valor de memoria (2 bytes)
     if (dirF < 0 || dirF + 1 >= MAX_MEM) {
         fprintf(stderr, "Error: Lectura de memoria fuera de limites: %d\n", dirF);
         exit(EXIT_FAILURE);
     } else {
+        
         valor |= (mv->memoria[dirF] & 0x00FF) << 8;
         valor |= (mv->memoria[dirF + 1] & 0x00FF);
+
         setLAR(mv, mv->registros[DS], mv->registros[DS] & 0xFFFF); //actualizar LAR con el valor de DS
         //cargar MAR y MBR
         setMAR(mv, 4, dirF);
@@ -126,18 +129,16 @@ void recuperaOperandos(maquinaVirtual *mv, operando *operandos, int ip) {
                 auxInt |= mv->memoria[ip++];
                 auxInt |= mv->memoria[ip] & 0x00FF;
                 operandos[i].desplazamiento = auxInt;
-                operandos[i].registro = -1;
     
             } else if (operandos[i].tipo == 3) { //si es de memoria
     
                 aux = mv->memoria[ip];
                 aux = aux & 0x0F;
-                operandos[i].registro = aux;
                 ip++;
                 auxInt |= mv->memoria[ip++];
                 auxInt |= mv->memoria[ip] & 0x00FF;
                 operandos[i].desplazamiento = auxInt;
-    
+             
             }
         } 
     }
@@ -145,10 +146,10 @@ void recuperaOperandos(maquinaVirtual *mv, operando *operandos, int ip) {
         operandos[0].tipo = operandos[1].tipo;
         operandos[0].registro = operandos[1].registro;
         operandos[0].desplazamiento = operandos[1].desplazamiento;;
-    }
+    }/* 
     for(int i=0;i<2;i++){
         printf("Registro: %x\n", operandos[i].registro);
-    }     
+    }*/     
 }
 
 void imprimeOperando(operando op) {

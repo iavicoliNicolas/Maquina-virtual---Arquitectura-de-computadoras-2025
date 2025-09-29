@@ -7,7 +7,7 @@
 int verificarIntegridadVMX(FILE* arch);
 
 int main(int argc, char *argv[]) {
-    int modo_disassembler=0;
+
     if (argc < 2) {
         fprintf(stderr, "Uso: %s archivo.vmx [-d]\n", argv[0]);
         return 1;
