@@ -18,7 +18,7 @@ int logicoAFisico(maquinaVirtual *mv, int direccionLogica) {
 
     printf("Direccion logica: 0x%08X\n", direccionLogica);
 
-    int segmento = direccionLogica >> 16;
+    int segmento = (direccionLogica >> 16) & 0xFF;
     int desplazamiento = direccionLogica & 0xFFFF;
 
     // Verificar que el segmento es válido
@@ -78,23 +78,13 @@ void leerMV(maquinaVirtual *mv, FILE* arch) {
 
     // 5. Cargar código en memoria (segmento de código)
     fread(mv->memoria, sizeof(char), tamano_codigo, arch);
-    for( int j=0; j <= tamano_codigo; j++)
-    {
-        //printf("%02X ", (unsigned char)mv->memoria[j]);
-        fread(&mv->memoria[j], sizeof(char), 1, arch);
-    }
-    printf("\n");
-
 
     // 6. Inicializar tabla de descriptores de segmentos
-    // Entrada 0: Segmento de código
-    mv->tablaSegmentos[0][0] = 0;                      // Base = 0
-    mv->tablaSegmentos[0][1] = tamano_codigo - 1;      // Tamaño del código
+    mv->tablaSegmentos[0][0] = 0;                     // Base = 0
+    mv->tablaSegmentos[0][1] = tamano_codigo;         // Tamaño del código 
 
-    // Entrada 1: Segmento de datos
-    mv->tablaSegmentos[1][0] = tamano_codigo;          // Base = fin del código
-    mv->tablaSegmentos[1][1] = 16384 - tamano_codigo;  // Tamaño de datos
-
+    mv->tablaSegmentos[1][0] = tamano_codigo;         // Base = fin del código
+    mv->tablaSegmentos[1][1] = 16384 - tamano_codigo; // Tamaño de datos
     // Las demás entradas (2-7) se inicializan a 0
     for (int i = 2; i < 8; i++) {
         for (int j = 0; j < 2; j++)
@@ -162,7 +152,7 @@ void muestraCS(maquinaVirtual mv) {
         printf("\n");
     }
 
-    printf("\nRegistro CS: 0x%08X\n", mv.registros[26]);
+    printf("\nRegistro CS: 0x%08X\n", mv.registros[CS]);
 }
 
 
@@ -195,7 +185,7 @@ void ejecutarMV(maquinaVirtual *mv) {
     while( mv->registros[IP] < mv->tablaSegmentos[0][1] && mv->registros[IP] >= 0) //mientras IP < limite del segmento de codigo
     {
         printf("\n=============Ciclo================\n");
-        //printf("\n--- Ejecucion de instruccion en IP=0x%04X ---\n", mv->registros[IP]);
+        printf("\n--- Ejecucion de instruccion en IP=0x%04X ---\n", mv->registros[IP]);
         //leer instruccion apuntada por el registro IP
         leerInstruccion( mv, &operacion, operandos);
 
@@ -204,9 +194,9 @@ void ejecutarMV(maquinaVirtual *mv) {
 
         //Recuperar los operandos de la instruccion y almacenarlos en el arreglo operandos
         recuperaOperandos(mv, operandos, mv->registros[IP]);
-        //printf("Operando 1: Tipo=%d, Registro=%d, Desplazamiento=%d\n", operandos[0].tipo, operandos[0].registro, operandos[0].desplazamiento);
-        //printf("Operando 2: Tipo=%d, Registro=%d, Desplazamiento=%d\n", operandos[1].tipo, operandos[1].registro, operandos[1].desplazamiento);
-        //printf("Operacion: %d\n", operacion);
+        printf("Operacion: %d ", operacion);
+        printf("Operando 1: Tipo=%d, Registro=%d, Desplazamiento=%d ", operandos[0].tipo, operandos[0].registro, operandos[0].desplazamiento);
+        printf("Operando 2: Tipo=%d, Registro=%d, Desplazamiento=%d\n", operandos[1].tipo, operandos[1].registro, operandos[1].desplazamiento);
 
         //Guardar en los registros OP1 y OP2 los operandos de la instruccion
         setRegOP(mv, OP1, operandos[0], operandos[0].tipo);
@@ -229,9 +219,9 @@ void ejecutarMV(maquinaVirtual *mv) {
             //printf("Ejecutando operacion %d\n", (int)operacion);
             v[operacion](mv, op);
         }
-        //printf("Registros despues de la operacion:\n");
-        //printf("EAX: 0x%08X, EBX: 0x%08X, ECX: 0x%08X, EDX: 0x%08X\n", mv->registros[EAX], mv->registros[EBX], mv->registros[ECX], mv->registros[EDX]);
-        //scanf("%*c"); //espera a que el usuario presione enter para continuar
+        printf("Registros despues de la operacion:\n");
+        printf("EAX: 0x%08X, EBX: 0x%08X, ECX: 0x%08X, EDX: 0x%08X\n", mv->registros[EAX], mv->registros[EBX], mv->registros[ECX], mv->registros[EDX]);
+        scanf("%*c"); //espera a que el usuario presione enter para continuar
     }
     printf("\nEjecucion finalizada\n");
 }

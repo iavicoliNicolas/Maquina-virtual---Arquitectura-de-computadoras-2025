@@ -4,10 +4,8 @@
 # Archivos específicos de Code::Blocks
 *.depend
 *.layout
-*.workspace
 
 # Archivos ejecutables
-*.exe
 *.app
 *.out
 

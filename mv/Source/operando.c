@@ -32,8 +32,8 @@ int getMem(maquinaVirtual *mv, int op) {
     int valor = 0;
 
     //extraer registro y desplazamiento de op
-    int reg = getReg(mv, op);
-    int desplazamiento = getInm(mv, op);
+    int reg = (op >> 16) & 0xFF;
+    int desplazamiento = op & 0xFFFF;
  
     //calcular la direccion efectiva
     int dirL = mv->registros[reg] + desplazamiento; 
