@@ -26,7 +26,7 @@ int logicoAFisico(maquinaVirtual *mv, int direccionLogica) {
         fprintf(stderr, "Error: Segmento inválido: %d\n", segmento);
         exit(EXIT_FAILURE);
     }
-
+    
     // Calcular la dirección física
     int base = mv->tablaSegmentos[segmento][0];
     int limite = mv->tablaSegmentos[segmento][1];

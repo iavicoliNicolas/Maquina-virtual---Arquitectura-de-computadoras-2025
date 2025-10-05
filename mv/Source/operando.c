@@ -33,10 +33,10 @@ int getMem(maquinaVirtual *mv, int op) {
 
     //extraer registro y desplazamiento de op
     int reg = (op >> 16) & 0xFF;
-    int desplazamiento = op & 0xFFFF;
+    int desplazamiento = op & 0x0000FFFF;
  
     //calcular la direccion efectiva
-    int dirL = mv->registros[reg] + desplazamiento; 
+    int dirL = mv->registros[reg] + desplazamiento; //[eax + 3]
     int dirF = logicoAFisico(mv, dirL); //convertir direccion logica a fisica
 
     //leer el valor de memoria (2 bytes)
@@ -45,10 +45,10 @@ int getMem(maquinaVirtual *mv, int op) {
         exit(EXIT_FAILURE);
     } else {
         
-        valor |= (mv->memoria[dirF] & 0x00FF) << 8;
-        valor |= (mv->memoria[dirF + 1] & 0x00FF);
+        valor = ((mv->memoria[dirF] & 0x00FF) << 8) | (mv->memoria[dirF + 1] & 0x00FF);
 
         setLAR(mv, mv->registros[DS], mv->registros[DS] & 0xFFFF); //actualizar LAR con el valor de DS
+    
         //cargar MAR y MBR
         setMAR(mv, 4, dirF);
         setMBR(mv, valor);

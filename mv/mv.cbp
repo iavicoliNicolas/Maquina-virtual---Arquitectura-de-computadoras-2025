@@ -11,8 +11,10 @@
 				<Option object_output="obj/Debug/" />
 				<Option type="1" />
 				<Option compiler="gcc" />
+				<Option parameters='./mv.exe &quot;sample(1).vmx&quot; -d' />
 				<Compiler>
 					<Add option="-g" />
+					<Add directory="include" />
 				</Compiler>
 			</Target>
 			<Target title="Release">
@@ -34,16 +36,22 @@
 		<Unit filename="Source/disassembler.c">
 			<Option compilerVar="CC" />
 		</Unit>
+		<Unit filename="Source/funciones.c">
+			<Option compilerVar="CC" />
+		</Unit>
 		<Unit filename="Source/main.c">
 			<Option compilerVar="CC" />
 		</Unit>
 		<Unit filename="Source/mv.c">
 			<Option compilerVar="CC" />
 		</Unit>
+		<Unit filename="Source/operando.c">
+			<Option compilerVar="CC" />
+		</Unit>
 		<Unit filename="include/disassembler.h" />
+		<Unit filename="include/funciones.h" />
 		<Unit filename="include/mv.h" />
 		<Unit filename="include/operando.h" />
-		<Unit filename="include/funciones.h" />
 		<Extensions>
 			<lib_finder disable_auto="1" />
 		</Extensions>

@@ -196,10 +196,10 @@ void JNN(maquinaVirtual *mv, int *op){
     }
 }
 void LDL(maquinaVirtual *mv, int *op){
-    setOp(mv, op[0], (getOp(mv, op[0]) & 0xFFFFFF00) | (getOp(mv, op[1]) & 0x000000FF));
+    setOp(mv, op[0], (getOp(mv, op[0]) & 0xFFFF0000) | (getOp(mv, op[1]) & 0x0000FFFF));
 }
 void LDH(maquinaVirtual *mv, int *op){
-    setOp(mv, op[0], (getOp(mv, op[0]) & 0xFFFF00FF) | ((getOp(mv, op[1]) & 0x000000FF) << 8));
+    setOp(mv, op[0], (getOp(mv, op[0]) & 0xFFFF0000) | ((getOp(mv, op[1]) & 0x0000FFFF) << 16)); //* <<8
 }
 void NOT(maquinaVirtual *mv, int *op){
     setOp(mv, op[0], ~getOp(mv, op[0]));
