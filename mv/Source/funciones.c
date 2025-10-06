@@ -105,7 +105,6 @@ void MUL(maquinaVirtual *mv, int *op){
 }
 void DIV(maquinaVirtual *mv, int *op) {
     int aux = getOp(mv, op[1]);
-    printf("---->divisor=%d",aux);///--------------------------------------------------------------
     if ( aux == 0) {
         fprintf(stderr, "Error: Division por cero\n");
         exit(EXIT_FAILURE);
