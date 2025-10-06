@@ -48,9 +48,7 @@ int getMem(maquinaVirtual *mv, int op) {
         
         valor = ((mv->memoria[dirF] & 0x00FF) << 8) | (mv->memoria[dirF + 1] & 0x00FF);
 
-        setLAR(mv,dirL); //actualizar LAR con el valor de DS
-    
-        //cargar MAR y MBR
+        setLAR(mv,dirL); 
         setMAR(mv, 4, dirF);
         setMBR(mv, valor);
     }
@@ -145,11 +143,11 @@ void recuperaOperandos(maquinaVirtual *mv, operando *operandos, int ip) {
     if(operandos[0].tipo == 0){
         operandos[0].tipo = operandos[1].tipo;
         operandos[0].registro = operandos[1].registro;
-        operandos[0].desplazamiento = operandos[1].desplazamiento;;
-    }/* 
-    for(int i=0;i<2;i++){
-        printf("Registro: %x\n", operandos[i].registro);
-    }*/     
+        operandos[0].desplazamiento = operandos[1].desplazamiento;
+        operandos[1].tipo = 0;
+        operandos[1].registro = -1;
+        operandos[1].desplazamiento = -1;
+    }   
 }
 
 void imprimeOperando(operando op) {
