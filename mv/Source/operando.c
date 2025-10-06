@@ -48,7 +48,7 @@ int getMem(maquinaVirtual *mv, int op) {
         
         valor = ((mv->memoria[dirF] & 0x00FF) << 8) | (mv->memoria[dirF + 1] & 0x00FF);
 
-        setLAR(mv, mv->registros[DS], mv->registros[DS] & 0xFFFF); //actualizar LAR con el valor de DS
+        setLAR(mv,dirL); //actualizar LAR con el valor de DS
     
         //cargar MAR y MBR
         setMAR(mv, 4, dirF);

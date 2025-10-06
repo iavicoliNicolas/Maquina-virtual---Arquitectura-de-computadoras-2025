@@ -41,8 +41,8 @@ void loadSYSOperationArray(funcionSys *vecLlamadas){
     vecLlamadas[2] = writeSys;
 }
 
-void setLAR(maquinaVirtual *mv, int segmento, int desplaz) {
-    mv->registros[LAR] = ((segmento & 0xFFFF) << 16) | (desplaz & 0xFFFF);
+void setLAR(maquinaVirtual *mv, int dirL) {
+    mv->registros[LAR] = dirL;
     printf("LAR seteado a: 0x%08X\n", mv->registros[LAR]);
 }
 void setMAR(maquinaVirtual *mv, int nbytes, int dirFisica) {

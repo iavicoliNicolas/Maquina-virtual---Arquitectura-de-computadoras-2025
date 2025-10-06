@@ -15,7 +15,7 @@ typedef void (*funcionSys)(maquinaVirtual *, int);
 void cargaVF(Toperaciones *);
 void loadSYSOperationArray(funcionSys *vecLlamadas);
 
-void setLAR(maquinaVirtual *mv, int segmento, int desplaz);
+void setLAR(maquinaVirtual *mv, int dirL);
 void setMAR(maquinaVirtual *mv, int nbytes, int dirFisica);
 void setMBR(maquinaVirtual *mv, int valor);
 
