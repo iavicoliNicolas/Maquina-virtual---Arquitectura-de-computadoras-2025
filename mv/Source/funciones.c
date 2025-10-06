@@ -43,12 +43,15 @@ void loadSYSOperationArray(funcionSys *vecLlamadas){
 
 void setLAR(maquinaVirtual *mv, int segmento, int desplaz) {
     mv->registros[LAR] = ((segmento & 0xFFFF) << 16) | (desplaz & 0xFFFF);
+    printf("LAR seteado a: 0x%08X\n", mv->registros[LAR]);
 }
 void setMAR(maquinaVirtual *mv, int nbytes, int dirFisica) {
     mv->registros[MAR] = ((nbytes & 0xFFFF) << 16) | (dirFisica & 0xFFFF);
+    printf("MAR seteado a: 0x%08X\n", mv->registros[MAR]);
 }
 void setMBR(maquinaVirtual *mv, int valor) {
     mv->registros[MBR] = valor;
+    printf("MBR seteado a: 0x%08X\n", mv->registros[MBR]);
 }
 void setRegOP(maquinaVirtual *mv, int reg, operando valor, int tipo) {
 
@@ -199,7 +202,7 @@ void LDL(maquinaVirtual *mv, int *op){
     setOp(mv, op[0], (getOp(mv, op[0]) & 0xFFFF0000) | (getOp(mv, op[1]) & 0x0000FFFF));
 }
 void LDH(maquinaVirtual *mv, int *op){
-    setOp(mv, op[0], (getOp(mv, op[0]) & 0xFFFF0000) | ((getOp(mv, op[1]) & 0x0000FFFF) << 16)); //* <<8
+    setOp(mv, op[0], (getOp(mv, op[0]) & 0xFFFF0000) | ((getOp(mv, op[1]) & 0x0000FFFF) << 16));
 }
 void NOT(maquinaVirtual *mv, int *op){
     setOp(mv, op[0], ~getOp(mv, op[0]));
@@ -207,6 +210,56 @@ void NOT(maquinaVirtual *mv, int *op){
 void STOP(maquinaVirtual *mv, int *op){
     exit(EXIT_SUCCESS);
 }
+
+// Función genérica para almacenar valores en memoria (big-endian)
+void almacenarValorEnMemoria(maquinaVirtual *mv, int dir, int tamanio, int valor) {
+    // Almacenar en big-endian (más significativo primero)
+    int i;
+    for (i = 0; i < tamanio; i++) {
+        int shift = (tamanio - 1 - i) * 8;
+        mv->memoria[dir + i] = (valor >> shift) & 0xFF;
+    }
+}
+
+// Funciones auxiliares específicas para cada modo
+void leerYAlmacenarDecimal(maquinaVirtual *mv, int dir, int tamanio) {
+    int valor;
+    scanf("%d", &valor);
+    almacenarValorEnMemoria(mv, dir, tamanio, valor);
+}
+
+void leerYAlmacenarCaracter(maquinaVirtual *mv, int dir, int tamanio) {
+    char c;
+    scanf(" %c", &c); // El espacio ignora whitespace anterior
+    // Para caracteres, solo usamos el primer byte, el resto se llena con 0
+    mv->memoria[dir] = c;
+    int i;
+    for (i = 1; i < tamanio; i++) {
+        mv->memoria[dir + i] = 0;
+    }
+}
+
+void leerYAlmacenarHexadecimal(maquinaVirtual *mv, int dir, int tamanio) {
+    unsigned int valor;
+    scanf("%x", &valor);
+    almacenarValorEnMemoria(mv, dir, tamanio, (int)valor);
+}
+
+void leerYAlmacenarOctal(maquinaVirtual *mv, int dir, int tamanio) {
+    unsigned int valor;
+    scanf("%o", &valor);
+    almacenarValorEnMemoria(mv, dir, tamanio, (int)valor);
+}
+
+void leerYAlmacenarBinario(maquinaVirtual *mv, int dir, int tamanio) {
+    char bin_str[33];
+    scanf("%32s", bin_str); // Máximo 32 bits
+    int valor = (int)strtol(bin_str, NULL, 2);
+    almacenarValorEnMemoria(mv, dir, tamanio, valor);
+}
+
+
+
 void readSys(maquinaVirtual *mv, int arg) {
     // Obtener parámetros de los registros según la documentación
     int direccion_edx = mv->registros[EDX];
@@ -251,52 +304,15 @@ void readSys(maquinaVirtual *mv, int arg) {
     }
 }
 
-// Funciones auxiliares específicas para cada modo
-void leerYAlmacenarDecimal(maquinaVirtual *mv, int dir, int tamanio) {
-    int valor;
-    scanf("%d", &valor);
-    almacenarValorEnMemoria(mv, dir, tamanio, valor);
-}
-
-void leerYAlmacenarCaracter(maquinaVirtual *mv, int dir, int tamanio) {
-    char c;
-    scanf(" %c", &c); // El espacio ignora whitespace anterior
-    // Para caracteres, solo usamos el primer byte, el resto se llena con 0
-    mv->memoria[dir] = c;
+void mostrarBinario(int valor, int tamanio) {
+    int bits = tamanio * 8;
     int i;
-    for (i = 1; i < tamanio; i++) {
-        mv->memoria[dir + i] = 0;
+    for (i = bits - 1; i >= 0; i--) {
+        printf("%d", (valor >> i) & 1);
+        if (i % 4 == 0 && i > 0) printf(" ");
     }
 }
 
-void leerYAlmacenarHexadecimal(maquinaVirtual *mv, int dir, int tamanio) {
-    unsigned int valor;
-    scanf("%x", &valor);
-    almacenarValorEnMemoria(mv, dir, tamanio, (int)valor);
-}
-
-void leerYAlmacenarOctal(maquinaVirtual *mv, int dir, int tamanio) {
-    unsigned int valor;
-    scanf("%o", &valor);
-    almacenarValorEnMemoria(mv, dir, tamanio, (int)valor);
-}
-
-void leerYAlmacenarBinario(maquinaVirtual *mv, int dir, int tamanio) {
-    char bin_str[33];
-    scanf("%32s", bin_str); // Máximo 32 bits
-    int valor = (int)strtol(bin_str, NULL, 2);
-    almacenarValorEnMemoria(mv, dir, tamanio, valor);
-}
-
-// Función genérica para almacenar valores en memoria (big-endian)
-void almacenarValorEnMemoria(maquinaVirtual *mv, int dir, int tamanio, int valor) {
-    // Almacenar en big-endian (más significativo primero)
-    int i;
-    for (i = 0; i < tamanio; i++) {
-        int shift = (tamanio - 1 - i) * 8;
-        mv->memoria[dir + i] = (valor >> shift) & 0xFF;
-    }
-}
 
 void writeSys(maquinaVirtual *mv, int arg) {
 
@@ -357,14 +373,6 @@ void writeSys(maquinaVirtual *mv, int arg) {
         }
 
         printf("\n");
-    }
+    } 
 }
 
-void mostrarBinario(int valor, int tamanio) {
-    int bits = tamanio * 8;
-    int i;
-    for (i = bits - 1; i >= 0; i--) {
-        printf("%d", (valor >> i) & 1);
-        if (i % 4 == 0 && i > 0) printf(" ");
-    }
-}

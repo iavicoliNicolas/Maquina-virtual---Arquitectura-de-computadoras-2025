@@ -51,7 +51,7 @@ void leerMV(maquinaVirtual *mv, FILE* arch) {
 
     // 1. Leer cabecera del archivo VMX
     fread(cabecera, sizeof(char), 5, arch);
-    cabecera[6] = '\0'; // Null-terminate para comparación
+    cabecera[5] = '\0'; // Null-terminate para comparación
 
     // Verificar identificador "VMX25"
     if (strcmp(cabecera, "VMX25") != 0) {

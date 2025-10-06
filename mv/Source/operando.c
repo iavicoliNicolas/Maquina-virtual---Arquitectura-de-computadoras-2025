@@ -36,8 +36,9 @@ int getMem(maquinaVirtual *mv, int op) {
     int desplazamiento = op & 0x0000FFFF;
  
     //calcular la direccion efectiva
-    int dirL = mv->registros[reg] + desplazamiento; //[eax + 3]
+    int dirL = mv->registros[reg] + desplazamiento;
     int dirF = logicoAFisico(mv, dirL); //convertir direccion logica a fisica
+    printf("Direccion logica: 0x%08X, Direccion fisica: 0x%08X\n", dirL, dirF);
 
     //leer el valor de memoria (2 bytes)
     if (dirF < 0 || dirF + 1 >= MAX_MEM) {
@@ -97,7 +98,7 @@ void setOp(maquinaVirtual *mv, int op, int num) { //OP1 | OP2
             exit(EXIT_FAILURE);
             break;
         case 3: { //memoria
-            mv->memoria[getMem(mv, op)] = num; //[ax + 4] = num;
+            mv->memoria[getMem(mv, op)] = num; 
             break;
         }
         default:
@@ -133,12 +134,11 @@ void recuperaOperandos(maquinaVirtual *mv, operando *operandos, int ip) {
             } else if (operandos[i].tipo == 3) { //si es de memoria
     
                 aux = mv->memoria[ip];
-                aux = aux & 0x0F;
                 ip++;
                 auxInt |= mv->memoria[ip++];
                 auxInt |= mv->memoria[ip] & 0x00FF;
                 operandos[i].desplazamiento = auxInt;
-             
+                operandos[i].registro = aux;
             }
         } 
     }
