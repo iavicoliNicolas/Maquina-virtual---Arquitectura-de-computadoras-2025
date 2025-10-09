@@ -17,18 +17,25 @@
 #define OPC 4
 #define OP1 5
 #define OP2 6
+#define SP 7
+#define BP 8
+
 #define EAX 10
 #define EBX 11
 #define ECX 12
 #define EDX 13
 #define EEX 14
 #define EFX 15
+#define AC  16
+#define CC  17
 
-#define AC 16
-#define CC 17
+#define CS  26
+#define DS  27
+#define ES  28
+#define SS  29
+#define KS  30
+#define PS  31
 
-#define CS 26
-#define DS 27
 
 typedef struct maquinaVirtual {
     unsigned char memoria[MAX_MEM];
