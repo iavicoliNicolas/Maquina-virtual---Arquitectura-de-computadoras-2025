@@ -4,20 +4,73 @@
 #include "../include/disassembler.h"
 #include "../include/mv.h"
 
+
 int verificarIntegridadVMX(FILE* arch);
 
 int main(int argc, char *argv[]) {
 
-    if (argc < 2) {
-        fprintf(stderr, "Uso: %s archivo.vmx [-d]\n", argv[0]);
+    maquinaVirtual mv;
+
+    char* vmx_file;
+    char* vmi_file;
+    char *ext;
+
+    int desensamblador = 0;
+    int parametros = 0;
+    int memoria = 0;
+    int size = MAX_MEM; // valor por defecto
+
+    int tiene_vmx = 0;
+    int tiene_vmi = 0;
+
+    if (argc < 1) {
+        fprintf(stderr, "Archivos insuficientes\n");
+        return 0;
+    }
+
+
+    // Verificar argumentos
+    for (int i = 1; i < argc; i++) {
+
+        if (strcmp(argv[i], "-d") == 0) {
+            desensamblador = 1; 
+        }
+
+        if (strcmp(argv[i], "-p") == 0) {
+            parametros = 1; 
+        }
+
+        if (strncmp(argv[i], "-m", 2) == 0) {
+            memoria = 1; 
+            size = atoi(&argv[i][2]);
+        }
+
+        ext = strrchr(argv[i], '.');
+        if (ext != NULL) {
+
+            if (strcmp(ext, ".vmx") == 0) {
+
+                vmx_file = argv[i];
+                tiene_vmx = 1;
+
+            } else if (strcmp(ext, ".vmi") == 0) {
+
+                vmi_file = argv[i];
+                tiene_vmi = 1;
+
+            }
+        }
+    }
+
+    // Verificación mínima requerida
+    if (!tiene_vmx && !tiene_vmi) {
+        fprintf(stderr, "Error: Se requiere al menos un archivo .vmx o .vmi\n");
+
         return 1;
     }
 
-    FILE* archivo = fopen(argv[1], "rb");
-    if (!archivo) {
-        perror("Error al abrir archivo");
-        return 1;
-    }
+
+    FILE* archivo = fopen(vmx_file, "rb");
 
     if (!verificarIntegridadVMX(archivo)) {
         fclose(archivo);
@@ -26,11 +79,11 @@ int main(int argc, char *argv[]) {
 
     printf("\nHello maquina virtual\n");
 
-    maquinaVirtual mv;
+
     leerMV(&mv, archivo);
     fclose(archivo);
 
-    if (argc >= 3 && strcmp(argv[2], "-d") == 0)
+    if (desensamblador)
     {
         printf("\n=== DESASSEMBLER ===\n");
         disassembler(mv);
@@ -39,6 +92,7 @@ int main(int argc, char *argv[]) {
     ejecutarMV(&mv);     // solo ejecuta la MV
 
     printf("\nFIN MAQUINA VIRTUAL\n");
+
 
     return 0;
 }

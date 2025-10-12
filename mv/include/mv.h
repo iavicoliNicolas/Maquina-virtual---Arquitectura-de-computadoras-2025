@@ -6,7 +6,7 @@
 #include "operando.h"
 #include "funciones.h"
 
-#define MAX_MEM 16384
+#define MAX_MEMS 16384
 #define MAX_REG 32
 #define MAX_SEG 8
 
