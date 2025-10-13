@@ -6,7 +6,7 @@
 #include "operando.h"
 #include "funciones.h"
 
-#define MAX_MEMS 16384
+#define MAX_MEM 16384
 #define MAX_REG 32
 #define MAX_SEG 8
 
@@ -38,7 +38,8 @@
 
 
 typedef struct maquinaVirtual {
-    unsigned char memoria[MAX_MEM];
+    int memSize;
+    unsigned char *memoria;
     int registros[MAX_REG];
     int tablaSegmentos[MAX_SEG][2];
 } maquinaVirtual;

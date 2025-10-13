@@ -17,12 +17,12 @@ int main(int argc, char *argv[]) {
 
     int desensamblador = 0;
     int parametros = 0;
-    int memoria = 0;
-    int size = MAX_MEM; // valor por defecto
 
     int tiene_vmx = 0;
     int tiene_vmi = 0;
 
+    mv.memSize = MAX_MEM; // valor por defecto
+    
     if (argc < 1) {
         fprintf(stderr, "Archivos insuficientes\n");
         return 0;
@@ -41,8 +41,7 @@ int main(int argc, char *argv[]) {
         }
 
         if (strncmp(argv[i], "-m", 2) == 0) {
-            memoria = 1; 
-            size = atoi(&argv[i][2]);
+            mv.memSize = atoi(&argv[i][2]);
         }
 
         ext = strrchr(argv[i], '.');
@@ -70,6 +69,7 @@ int main(int argc, char *argv[]) {
     }
 
 
+    mv.memoria = (unsigned char *)malloc(mv.memSize * sizeof(unsigned char));
     FILE* archivo = fopen(vmx_file, "rb");
 
     if (!verificarIntegridadVMX(archivo)) {
