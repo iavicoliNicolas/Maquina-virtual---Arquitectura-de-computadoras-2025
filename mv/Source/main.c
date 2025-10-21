@@ -21,6 +21,8 @@ int main(int argc, char *argv[]) {
     int tiene_vmx = 0;
     int tiene_vmi = 0;
 
+    int version = 0;
+
     mv.memSize = MAX_MEM; // valor por defecto
     
     if (argc < 1) {
@@ -80,7 +82,8 @@ int main(int argc, char *argv[]) {
     printf("\nHello maquina virtual\n");
 
 
-    leerMV(&mv, archivo);
+    leerMV(&mv, archivo, &version); // carga el archivo vmx en la memoria de la MV
+    //printf("Version del archivo: %d\n", version);
     fclose(archivo);
 
     if (desensamblador)

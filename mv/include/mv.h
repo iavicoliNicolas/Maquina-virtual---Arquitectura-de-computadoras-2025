@@ -38,7 +38,9 @@
 
 
 typedef struct maquinaVirtual {
+    unsigned short int header[5];
     int memSize;
+    int memoriaUsada;
     unsigned char *memoria;
     int registros[MAX_REG];
     int tablaSegmentos[MAX_SEG][2];
@@ -53,7 +55,7 @@ void setReg(maquinaVirtual *mv, int reg, int valor);
 int getReg(maquinaVirtual *mv, int reg);
 
 //lectura de memoria a la maquina virtual
-void leerMV( maquinaVirtual *mv, FILE* arch); 
+void leerMV( maquinaVirtual *mv, FILE* arch, int *version); 
 
 //ejecucion de la maquina virtual
 static inline unsigned char leePos(char *mem, int pos);
