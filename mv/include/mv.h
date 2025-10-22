@@ -61,7 +61,7 @@ void leerMV( maquinaVirtual *mv, FILE* arch, int *version);
 static inline unsigned char leePos(char *mem, int pos);
 
 void leerInstruccion(maquinaVirtual *mv, unsigned char *operacion, operando *operandos);
-void ejecutarMV(maquinaVirtual *mv);
+void ejecutarMV(maquinaVirtual *mv, int version);
 int logicoAFisico(maquinaVirtual *mv, int direccionLogica);
 #endif // MV_H
 

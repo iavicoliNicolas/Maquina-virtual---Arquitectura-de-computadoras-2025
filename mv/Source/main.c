@@ -92,7 +92,7 @@ int main(int argc, char *argv[]) {
         disassembler(mv);
     }
 
-    ejecutarMV(&mv);     // solo ejecuta la MV
+    ejecutarMV(&mv, version);     // solo ejecuta la MV
 
     printf("\nFIN MAQUINA VIRTUAL\n");
 
