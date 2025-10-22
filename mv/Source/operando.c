@@ -150,35 +150,5 @@ void recuperaOperandos(maquinaVirtual *mv, operando *operandos, int ip) {
     }   
 }
 
-void imprimeOperando(operando op) {
-    switch (op.tipo) {
-        case 0: // ninguno
-            break;
 
-        case 1: // registro
-            if (op.registro >= 0 && op.registro < 32 && nombres_registros[op.registro])
-                printf("%s", nombres_registros[op.registro]);
-            else
-                printf("reg%d", op.registro); // por si es reservado
-            break;
-
-        case 2: // inmediato 
-            printf("%d", op.desplazamiento);
-            break;
-
-        case 3: // memoria 
-            printf("[");
-            if (op.registro != 0 && op.registro < 32 && nombres_registros[op.registro]) {
-                printf("%s", nombres_registros[op.registro]);
-                if (op.desplazamiento) {
-                    printf(" + %d", op.desplazamiento);
-                }
-            } else {
-                // acceso directo a memoria (sin registro base)
-                printf("%d", op.desplazamiento);
-            }
-            printf("]");
-            break;
-    }
-}
 

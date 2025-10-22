@@ -1,5 +1,6 @@
 #include <stdio.h>
 #include <string.h>
+#include <ctype.h>
 #include "../include/mv.h"
 #include "../include/disassembler.h"
 #include "../include/operando.h"
@@ -15,6 +16,10 @@ const char* mnemonicos[32] = {
     [0x06] = "JNP",
     [0x07] = "JNN",
     [0x08] = "NOT",
+    [0x0B] = "PUSH",
+    [0x0C] = "POP",
+    [0x0D] = "CALL",
+    [0x0E] = "RET",
     [0x0F] = "STOP",
     [0x10] = "MOV",
     [0x11] = "ADD",
@@ -35,62 +40,255 @@ const char* mnemonicos[32] = {
 };
 
 const char* nombres_registros[32] = {
-    [0]  = "LAR",   
-    [1]  = "MAR",   
-    [2]  = "MBR",  
-    [3]  = "IP",    
-    [4]  = "OPC",   
-    [5]  = "OP1",   
-    [6]  = "OP2",   
-    [7]  = NULL,    
-    [8]  = NULL,    
-    [9]  = NULL,   
-    [10] = "EAX",   
-    [11] = "EBX",  
-    [12] = "ECX",  
-    [13] = "EDX", 
-    [14] = "EEX",   
-    [15] = "EFX",   
-    [16] = "AC",    
-    [17] = "CC",    
-    [18] = NULL,    
-    [19] = NULL,    
+    [0]  = "LAR",
+    [1]  = "MAR",
+    [2]  = "MBR",
+    [3]  = "IP",
+    [4]  = "OPC",
+    [5]  = "OP1",
+    [6]  = "OP2",
+    [7]  = "SP",
+    [8]  = "BP",
+    [9]  = NULL,
+    [10] = "EAX",
+    [11] = "EBX",
+    [12] = "ECX",
+    [13] = "EDX",
+    [14] = "EEX",
+    [15] = "EFX",
+    [16] = "AC",
+    [17] = "CC",
+    [18] = NULL,
+    [19] = NULL,
     [20] = NULL,
     [21] = NULL,
     [22] = NULL,
     [23] = NULL,
     [24] = NULL,
     [25] = NULL,
-    [26] = "CS",    
-    [27] = "DS",    
-    [28] = NULL,
-    [29] = NULL,
-    [30] = NULL,
-    [31] = NULL
+    [26] = "CS",
+    [27] = "DS",
+    [28] = "ES",
+    [29] = "SS",
+    [30] = "KS",
+    [31] = "PS",
 };
 extern const char* mnemonicos[32];
 extern const char* nombres_registros[32];
 
 
-static inline unsigned char r8(char *mem, int pos) {
+unsigned char r8(unsigned char *mem, int pos) {
     return (unsigned char)mem[pos];
 }
 
-static inline unsigned short r16(char *mem, int pos) {
+unsigned short r16(unsigned char *mem, int pos) {
     // big-endian
     return (unsigned short)(((unsigned char)mem[pos] << 8) | (unsigned char)mem[pos+1]);
 }
+void imprimeOperando(operando op) {
+    int sector,regid,size;
+    unsigned char byte;
+    const char *pref ;
+    if (op.tipo == 0) //no hay operando
+        return;
 
+    if (op.tipo == 1) { // registro
+        byte = (unsigned char)op.registro;
+        sector = (byte >> 6) & 0x03;   // bits 7–6
+        regid  = byte & 0x1F;          // bits 4–0
+
+        const char *base = (regid < 32) ? nombres_registros[regid] : NULL;
+
+        if (!base) {
+            printf("R%d", regid);
+            return;
+        }
+
+        switch (sector) {
+            case 0:  printf("%s", base); break;      // registro completo (EAX)
+            case 1:  printf("%cL", base[1]); break;  // byte bajo (AL)
+            case 2:  printf("%cH", base[1]); break;  // byte alto (AH)
+            case 3:  printf("%cX", base[1]); break;  // word (AX)
+        }
+    }
+    else
+        if (op.tipo == 2) { // inmediato
+         printf("%d", op.desplazamiento);
+        }
+        else
+           if (op.tipo == 3) { // memoria
+             unsigned char byte = (unsigned char)op.registro;
+             size = (byte >> 6) & 0x03;  // 00=l, 10=w, 11=b
+             regid = byte & 0x1F;
+
+             pref= "l"; // tamaño por defecto long
+             if (size == 2)
+                 pref = "w";
+             else
+                 if (size == 3)
+                    pref = "b";
+
+            const char *seg = (regid < 32) ? nombres_registros[regid] : NULL;
+
+             printf("%s[", pref);
+            if (seg)
+               printf("%s", seg);
+            else
+               printf("R%d", regid);
+
+            if (op.desplazamiento)
+                printf("+%d", op.desplazamiento);
+             printf("]");
+            }
+}
+/* Devuelve 1 si un segmento (base,size) contiene cadenas:
+   busca secuencias imprimibles >=3 seguidas de '\0'. */
+int segmentoEsProbableConst(unsigned char *mem, int base, int size) {
+    int i,j,end;
+    end = base + size;
+    for (i = base; i + 2 < end; i++) {
+        // buscamos 3 bytes imprimibles seguidos y después un '\0' en algún punto cercano
+        if (isprint((unsigned char)mem[i]) && isprint((unsigned char)mem[i+1]) && isprint((unsigned char)mem[i+2])) {
+            // buscar un '\0' dentro de los próximos 64 bytes
+            for (j = i+3; j < end && j < i+64; j++) {
+                if (mem[j] == 0)
+                   return 1;
+            }
+        }
+    }
+    return 0;
+}
+/* Muestra todas las cadenas del/los segmentos que detecte como Const Segment.
+   (máx 7 bytes hex visibles, luego '..' si continua).
+*/
+void mostrarConstSegments(maquinaVirtual mv) {
+    int base,size,s,dir,end,i,found,show,strlen_bytes,k;
+    unsigned char c;
+    // Para tabla de 8 entradas tablaSegmentos[i][0]=base, [i][1]=size
+    for (s = 0; s < 8; s++) {
+        base = mv.tablaSegmentos[s][0];
+        size = mv.tablaSegmentos[s][1];
+        if (size <= 0)
+            continue;
+        if (!segmentoEsProbableConst(mv.memoria, base, size))//decide si el segmento contiene constantes
+            continue;
+
+        dir = base;
+        end = base + size;
+        while (dir < end) {
+            // intentar leer una cadena terminada en \0
+            i = dir;
+            found = 0;
+            while (i < end && (unsigned char)mv.memoria[i] != 0)
+                i++;
+            if (i < end && (unsigned char)mv.memoria[i] == 0) //encuentra "\0"
+                found = 1;
+            //NO se encontró \0 → mostrar bytes sueltos
+            if (!found) {
+                printf("[%04X] ", dir);
+                // print up to 7 bytes or until end
+                show = (end - dir) < 7 ? (end - dir) : 7;
+                for (k = 0; k < show; k++) {
+                    printf("%02X ", (unsigned char)mv.memoria[dir + k]);
+                }
+                if ((end - dir) > 7)
+                    printf(".. ");
+                else {
+                    for (k = show; k < 7; k++)
+                       printf("   ");
+                }
+                printf(" | \"");
+                for (k = 0; k < show; k++) {
+                    unsigned char c = mv.memoria[dir + k];
+                    if (isprint(c))
+                       printf("%c", c);
+                    else
+                       printf(".");
+                }
+                printf("\"\n");
+                dir += show ? show : 1;
+            } else {
+                // se econtro una cadena desde dir hasta i (incluye \0)
+                strlen_bytes  = (i - dir) + 1; // incluye "\0"
+                printf("[%04X] ", dir);
+                if (strlen_bytes <= 7) {
+                    for (int k = 0; k < strlen_bytes; k++) {
+                        printf("%02X ", (unsigned char)mv.memoria[dir + k]);
+                    }
+                    for (int k = strlen_bytes; k < 7; k++) printf("   ");
+                } else {
+                    // si se superan los 7 bytes, mostrar primeros 6 y luego '..'
+                    for (int k = 0; k < 6; k++) {
+                        printf("%02X ", (unsigned char)mv.memoria[dir + k]);
+                    }
+                    printf(".. ");
+                }
+
+                printf(" | \"");
+                if (strlen_bytes <= 7) {
+                    for (int k = 0; k < strlen_bytes - 1; k++) {
+                         c = mv.memoria[dir + k];
+                        if (isprint(c)) printf("%c", c);
+                        else printf(".");
+                    }
+                } else {
+                    // mostrar los primeros (strlen > 7) -> mostrar hasta los primeros 6 chars, luego '...'
+                    for (int k = 0; k < 6; k++) {
+                        c = mv.memoria[dir + k];
+                        if (isprint(c)) printf("%c", c);
+                        else printf(".");
+                    }
+                    printf("...");
+                }
+                printf("\"\n");
+                dir += strlen_bytes;
+            }
+        }
+    }
+}
+/* Retorna la dirección física del IP actual (con registro IP).
+  IP contiene: 16 bits altos = índice en tabla de segmentos; 16 bits bajos = offset (desplazamiento en el seg)
+*/
+unsigned int ipFisicaDesdeRegistroIP(maquinaVirtual mv) {
+    unsigned int ip_reg,seg_index,offset;
+    int base,size;
+    ip_reg = mv.registros[3]; // IP
+    seg_index = (ip_reg >> 16) & 0xFFFF;
+    offset = ip_reg & 0xFFFF;
+    if (seg_index < 8) {
+        base = mv.tablaSegmentos[seg_index][0];
+        size = mv.tablaSegmentos[seg_index][1];
+        return (unsigned int)(base + offset);
+    }
+    else {
+        return 0xFFFFFFFF; // invalido
+    }
+}
 
 void disassembler(maquinaVirtual mv) {
     int base_cs, size_cs, end_cs, ip;
     unsigned char b0;
+    unsigned int reg_cs,seg_index,entry_fis;
     int tipoA, tipoB, codOp;
     operando opA = {0}, opB = {0};
 
     base_cs = mv.tablaSegmentos[0][0];
     size_cs = mv.tablaSegmentos[0][1];
+
+     // Se usa para ver que CS no este inicializado en -1
+    reg_cs = mv.registros[26];
+    if (reg_cs != 0xFFFFFFFF) {
+        seg_index = (reg_cs >> 16) & 0xFFFF;//Saco indice del segmento de parte alta de reg_cs
+        if (seg_index < 8 && mv.tablaSegmentos[seg_index][1] > 0) { //que no se caiga de la tabla y que tamaño del seg>0
+            base_cs = mv.tablaSegmentos[seg_index][0];
+            size_cs = mv.tablaSegmentos[seg_index][1];
+        }
+    }
     end_cs  = base_cs + size_cs;
+    //calculo punto de entrada (para marcar con'>')
+    entry_fis = ipFisicaDesdeRegistroIP(mv);
+
+    mostrarConstSegments(mv);
 
     ip = base_cs;
     while (ip < end_cs) {
@@ -109,14 +307,19 @@ void disassembler(maquinaVirtual mv) {
 
         int instr_len = ip - start_ip; // long total de instrucción
 
-      
+        // marca punto de entrada
+        if ((unsigned int)direccion == entry_fis)
+            printf(">");
+        else
+             printf(" ");
+
         printf("[%04X] ", direccion);
 
         // imprime instrucción en hex
         for (int i = 0; i < instr_len; i++) {
             printf("%02X ", (unsigned char)mv.memoria[start_ip + i]);
         }
-        // relleno para alinear 
+        // relleno para alinear
         for (int i = instr_len; i < 8; i++) {
             printf("   ");
         }
@@ -145,6 +348,11 @@ void disassembler(maquinaVirtual mv) {
             printf("STOP ");
             break;
         }
+        //------------>Ver si se puede omitir
+         // limpiar operando para la próxima instrucción
+        opA.tipo = opB.tipo = 0;
+        opA.registro = opB.registro = 0;
+        opA.desplazamiento = opB.desplazamiento = 0;
     }
 
     printf("\n");
@@ -159,7 +367,7 @@ int decodificaOperando(maquinaVirtual mv, int pos, int tipo, operando *op) {
     if (tipo == 1) { // Registro
         op->tipo = 1;
         byte = r8(mv.memoria, pos);
-        op->registro = byte & 0x1F;
+        op->registro = byte;
         return 1;
     }
 
