@@ -25,11 +25,12 @@ int main(int argc, char *argv[]) {
 
     mv.memSize = MAX_MEM; // valor por defecto
     
+
     if (argc < 1) {
         fprintf(stderr, "Archivos insuficientes\n");
         return 0;
     }
-{}
+
     // Verificar argumentos
     for (int i = 1; i < argc; i++) {
 
@@ -39,7 +40,7 @@ int main(int argc, char *argv[]) {
 
         if (strcmp(argv[i], "-p") == 0 && i == argc - 1) {
             parametros = 1; 
-            
+            //TODO segmento de parametros
         }
 
         if (strncmp(argv[i], "-m", 2) == 0) {

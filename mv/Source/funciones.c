@@ -29,6 +29,10 @@ void cargaVF(Toperaciones *v){
     v[0x06] = JNP;
     v[0x07] = JNN;
     v[0x08] = NOT;
+    v[0x0B] = PUSH;
+    v[0x0C] = POP;
+    v[0x0D] = CALL;
+    v[0x0E] = RET;
     //operaciones sin operandos
     v[0x0F] = STOP;
 
