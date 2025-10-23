@@ -29,8 +29,7 @@ int main(int argc, char *argv[]) {
         fprintf(stderr, "Archivos insuficientes\n");
         return 0;
     }
-
-
+{}
     // Verificar argumentos
     for (int i = 1; i < argc; i++) {
 
@@ -38,8 +37,9 @@ int main(int argc, char *argv[]) {
             desensamblador = 1; 
         }
 
-        if (strcmp(argv[i], "-p") == 0) {
+        if (strcmp(argv[i], "-p") == 0 && i == argc - 1) {
             parametros = 1; 
+            
         }
 
         if (strncmp(argv[i], "-m", 2) == 0) {
@@ -70,7 +70,6 @@ int main(int argc, char *argv[]) {
         return 1;
     }
 
-
     mv.memoria = (unsigned char *)malloc(mv.memSize * sizeof(unsigned char));
     FILE* archivo = fopen(vmx_file, "rb");
 
@@ -80,7 +79,6 @@ int main(int argc, char *argv[]) {
     }
 
     printf("\nHello maquina virtual\n");
-
 
     leerMV(&mv, archivo, &version); // carga el archivo vmx en la memoria de la MV
     //printf("Version del archivo: %d\n", version);
