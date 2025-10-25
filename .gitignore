@@ -20,3 +20,11 @@
 # Archivos de backup
 *~
 *.bak
+*.log
+*.tmp
+
+# Archivos generados por el editor o IDE
+*.user
+*.userprefs
+*.suo
+*.vcxproj.*
