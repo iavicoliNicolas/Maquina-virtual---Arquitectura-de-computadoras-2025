@@ -140,112 +140,167 @@ void imprimeOperando(operando op) {
                 printf("+%d", op.desplazamiento);
              printf("]");
             }
+
 }
-/* Devuelve 1 si un segmento (base,size) contiene cadenas:
-   busca secuencias imprimibles >=3 seguidas de '\0'. */
 int segmentoEsProbableConst(unsigned char *mem, int base, int size) {
-    int i,j,end;
+    int i, end;
     end = base + size;
-    for (i = base; i + 2 < end; i++) {
-        // buscamos 3 bytes imprimibles seguidos y después un '\0' en algún punto cercano
-        if (isprint((unsigned char)mem[i]) && isprint((unsigned char)mem[i+1]) && isprint((unsigned char)mem[i+2])) {
-            // buscar un '\0' dentro de los próximos 64 bytes
-            for (j = i+3; j < end && j < i+64; j++) {
-                if (mem[j] == 0)
-                   return 1;
-            }
-        }
+
+    for (i = base; i + 5 < end; i += 2) { // mínimo 3 caracteres = 6 bytes
+        int count = 0;
+        while (i + count + 1 < end && isprint(mem[i + count]) && mem[i + count + 1] == 0)
+            count += 2;
+
+        if (count >= 6) // 3 o más caracteres consecutivos
+            return 1;
     }
-    return 0;
+
+    return 0; // no hay cadena de ≥3 caracteres
 }
-/* Muestra todas las cadenas del/los segmentos que detecte como Const Segment.
-   (máx 7 bytes hex visibles, luego '..' si continua).
-*/
+
+
 void mostrarConstSegments(maquinaVirtual mv) {
-    int base,size,s,dir,end,i,found,show,strlen_bytes,k;
+    int base, size, s, dir, end, i;
     unsigned char c;
-    // Para tabla de 8 entradas tablaSegmentos[i][0]=base, [i][1]=size
+
     for (s = 0; s < 8; s++) {
         base = mv.tablaSegmentos[s][0];
         size = mv.tablaSegmentos[s][1];
-        if (size <= 0)
-            continue;
-        if (!segmentoEsProbableConst(mv.memoria, base, size))//decide si el segmento contiene constantes
-            continue;
+        if (size <= 0) continue;
 
         dir = base;
         end = base + size;
-        while (dir < end) {
-            // intentar leer una cadena terminada en \0
-            i = dir;
-            found = 0;
-            while (i < end && (unsigned char)mv.memoria[i] != 0)
-                i++;
-            if (i < end && (unsigned char)mv.memoria[i] == 0) //encuentra "\0"
-                found = 1;
-            //NO se encontró \0 → mostrar bytes sueltos
-            if (!found) {
-                printf("[%04X] ", dir);
-                // print up to 7 bytes or until end
-                show = (end - dir) < 7 ? (end - dir) : 7;
-                for (k = 0; k < show; k++) {
-                    printf("%02X ", (unsigned char)mv.memoria[dir + k]);
-                }
-                if ((end - dir) > 7)
-                    printf(".. ");
-                else {
-                    for (k = show; k < 7; k++)
-                       printf("   ");
-                }
-                printf(" | \"");
-                for (k = 0; k < show; k++) {
-                    unsigned char c = mv.memoria[dir + k];
-                    if (isprint(c))
-                       printf("%c", c);
-                    else
-                       printf(".");
-                }
-                printf("\"\n");
-                dir += show ? show : 1;
-            } else {
-                // se econtro una cadena desde dir hasta i (incluye \0)
-                strlen_bytes  = (i - dir) + 1; // incluye "\0"
-                printf("[%04X] ", dir);
-                if (strlen_bytes <= 7) {
-                    for (int k = 0; k < strlen_bytes; k++) {
-                        printf("%02X ", (unsigned char)mv.memoria[dir + k]);
-                    }
-                    for (int k = strlen_bytes; k < 7; k++) printf("   ");
-                } else {
-                    // si se superan los 7 bytes, mostrar primeros 6 y luego '..'
-                    for (int k = 0; k < 6; k++) {
-                        printf("%02X ", (unsigned char)mv.memoria[dir + k]);
-                    }
-                    printf(".. ");
-                }
 
+        while (dir + 5 < end) { // mínimo 3 caracteres UTF-16LE
+            int start = dir;
+            int strlen_bytes = 0;
+
+            // contar caracteres consecutivos UTF-16LE imprimibles
+            while (dir + strlen_bytes + 1 < end &&
+                   isprint(mv.memoria[dir + strlen_bytes]) &&
+                   mv.memoria[dir + strlen_bytes + 1] == 0)
+            {
+                strlen_bytes += 2;
+            }
+
+            // ahora verificar que haya terminador 0x00 0x00 inmediatamente después
+            if (strlen_bytes >= 6 && dir + strlen_bytes + 1 < end &&
+                mv.memoria[dir + strlen_bytes] == 0 &&
+                mv.memoria[dir + strlen_bytes + 1] == 0)
+            {
+                strlen_bytes += 2; // incluir terminador
+
+                // imprimir dirección y HEX limitado a 7 bytes
+                printf("[%04X] ", start);
+                int hex_show = (strlen_bytes > 7 ? 7 : strlen_bytes);
+                for (i = 0; i < hex_show; i++)
+                    printf("%02X ", mv.memoria[start + i]);
+                if (strlen_bytes > 7)
+                    printf(".. ");
+                else
+                    for (i = hex_show; i < 7; i++)
+                        printf("   ");
+
+                // imprimir ASCII completa
                 printf(" | \"");
-                if (strlen_bytes <= 7) {
-                    for (int k = 0; k < strlen_bytes - 1; k++) {
-                         c = mv.memoria[dir + k];
-                        if (isprint(c)) printf("%c", c);
-                        else printf(".");
-                    }
-                } else {
-                    // mostrar los primeros (strlen > 7) -> mostrar hasta los primeros 6 chars, luego '...'
-                    for (int k = 0; k < 6; k++) {
-                        c = mv.memoria[dir + k];
-                        if (isprint(c)) printf("%c", c);
-                        else printf(".");
-                    }
-                    printf("...");
-                }
+                for (i = 0; i < strlen_bytes - 2; i += 2) // -2 para no imprimir terminador
+                    printf("%c", mv.memoria[start + i]);
                 printf("\"\n");
-                dir += strlen_bytes;
+
+                dir += strlen_bytes; // avanzar al siguiente bloque
+            } else {
+                dir += 2; // no es cadena válida, avanzar al siguiente UTF-16LE
             }
         }
     }
 }
+
+/*viejo
+/* Devuelve 1 si un segmento (base,size) contiene cadenas:
+ busca secuencias imprimibles >=3 seguidas de '\0'. 
+int segmentoEsProbableConst(unsigned char *mem, int base, int size) {
+    int i, end;
+    end = base + size;
+
+    for (i = base; i + 5 < end; i += 2) { // mínimo 3 caracteres = 6 bytes
+        int count = 0;
+        // contar caracteres imprimibles UTF-16LE
+        while (i + count + 1 < end && isprint(mem[i + count]) && mem[i + count + 1] == 0)
+            count += 2;
+
+        // mínimo 3 caracteres y terminador 0x00 0x00
+        if (count >= 6 && i + count + 1 < end &&
+            mem[i + count] == 0 && mem[i + count + 1] == 0) {
+            return 1; // cadena valida
+        }
+    }
+
+    return 0; // no se encontro cadena valida
+}*/
+
+/* Muestra todas las cadenas del/los segmentos que detecte como Const Segment.
+   (máx 7 bytes hex visibles, luego '..' si continua).
+*/
+/*void mostrarConstSegments(maquinaVirtual mv) {
+    int base, size, s, dir, end, i;
+    unsigned char c;
+
+    for (s = 0; s < 8; s++) {
+        base = mv.tablaSegmentos[s][0];
+        size = mv.tablaSegmentos[s][1];
+        if (size <= 0) continue;
+
+        dir = base;
+        end = base + size;
+
+        while (dir + 5 < end) { // mínimo 3 caracteres UTF-16LE
+            int start = dir;
+            int strlen_bytes = 0;
+
+            // contar caracteres consecutivos UTF-16LE imprimibles
+            while (dir + strlen_bytes + 1 < end &&
+                   isprint(mv.memoria[dir + strlen_bytes]) &&
+                   mv.memoria[dir + strlen_bytes + 1] == 0)
+            {
+                strlen_bytes += 2;
+            }
+
+            if (strlen_bytes >= 6) { // 3 o más caracteres
+                // incluir terminador si hay
+                if (dir + strlen_bytes + 1 < end &&
+                    mv.memoria[dir + strlen_bytes] == 0 &&
+                    mv.memoria[dir + strlen_bytes + 1] == 0)
+                {
+                    strlen_bytes += 2;
+                }
+
+                // imprimir dirección y HEX limitado a 7 bytes
+                printf("[%04X] ", start);
+                int hex_show = (strlen_bytes > 7 ? 7 : strlen_bytes);
+                for (i = 0; i < hex_show; i++)
+                    printf("%02X ", mv.memoria[start + i]);
+                if (strlen_bytes > 7)
+                    printf(".. ");
+                else
+                    for (i = hex_show; i < 7; i++)
+                        printf("   ");
+
+                // imprimir ASCII completa
+                printf(" | \"");
+                for (i = 0; i < strlen_bytes; i += 2)
+                    printf("%c", mv.memoria[start + i]);
+                printf("\"\n");
+
+                dir += strlen_bytes; // avanzar al siguiente bloque
+            } else {
+                dir += 2; // avanzar al siguiente carácter UTF-16LE
+            }
+        }
+    }
+}*/
+
+/*cierra viejo */
+
 /* Retorna la dirección física del IP actual (con registro IP).
   IP contiene: 16 bits altos = índice en tabla de segmentos; 16 bits bajos = offset (desplazamiento en el seg)
 */
