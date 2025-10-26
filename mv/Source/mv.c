@@ -72,10 +72,6 @@ void leerMV(maquinaVirtual *mv, FILE* arch, int *version) {
         exit(EXIT_FAILURE);
     }
 
-    // 3. Leer tamaño del segmento de código (2 bytes, little-endian)
-    fread(&tamano_codigo, sizeof(unsigned short int), 1, arch);
-    tamano_codigo = corrigeSize(tamano_codigo);
-
     // Inicializar registros
     for (i = 0; i < 32; i++) {
         mv->registros[i] = 0;
@@ -85,6 +81,10 @@ void leerMV(maquinaVirtual *mv, FILE* arch, int *version) {
     switch (*version)
     {
         case 1: // Código específico para la versión 1
+
+            // 3. Leer tamaño del segmento de código (2 bytes, little-endian)
+            fread(&tamano_codigo, sizeof(unsigned short int), 1, arch);
+            tamano_codigo = corrigeSize(tamano_codigo);
 
             // 4. Verificar que el código cabe en memoria
             if (tamano_codigo > MAX_MEM) {
@@ -138,7 +138,7 @@ void leerMV(maquinaVirtual *mv, FILE* arch, int *version) {
                     }
 
                 } else {
-                    mv->registros[ordenSegmento[i+1]] = 0; // Si el segmento no existe, el registro apunta a 0
+                    mv->registros[ordenSegmento[i+1]] = -1; // Si el segmento no existe, el registro apunta a 0
                 }
             }
             if ( totalLongitud > mv->memSize ) {
@@ -157,7 +157,7 @@ void leerMV(maquinaVirtual *mv, FILE* arch, int *version) {
     
     for ( i = ultSegmento+1; i < 8; i++) {
         for (int j = 0; j < 2; j++)
-            mv->tablaSegmentos[i][j] = 0;
+            mv->tablaSegmentos[i][j] = -1;
     }
 
     mv->registros[IP] = mv->registros[CS]; // Inicializar IP al inicio del segmento de código

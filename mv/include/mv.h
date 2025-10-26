@@ -37,6 +37,7 @@
 #define PS  31
 
 
+
 typedef struct maquinaVirtual {
     unsigned short int header[5];
     int memSize;

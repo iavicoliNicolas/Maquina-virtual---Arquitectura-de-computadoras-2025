@@ -168,6 +168,7 @@ void SYS(maquinaVirtual *mv, int *op) {
         exit(EXIT_FAILURE);
     }
 }
+
 void JMP(maquinaVirtual *mv, int *op){
     mv->registros[IP] = getOp(mv, op[0]);
 }
@@ -210,9 +211,92 @@ void LDH(maquinaVirtual *mv, int *op){
 void NOT(maquinaVirtual *mv, int *op){
     setOp(mv, op[0], ~getOp(mv, op[0]));
 }
+void PUSH(maquinaVirtual *mv, int *op){ //COMPLETAR/ARREGLAR
+    
+    int aux;
+    int posSeg = (mv->registros[SP] >> 16) & 0x0000000F;
+    int offset = mv->registros[SP] & 0x0000FFFF;
+
+    mv->registros[SP] -= 4; // Asumiendo tamaño de palabra de 4 bytes
+    if ( mv->memoria[SP] < mv->memoria[SS] ) {
+        printf("ERROR: STACK OVERFLOW\n");
+        STOP(mv, op);
+    } 
+    aux = getOp(mv, op[0]);
+    mv->memoria[posSeg + offset + 3] = (aux & 0x000000FF);
+    mv->memoria[posSeg + offset + 2] = (aux >> 8) & 0x000000FF;
+    mv->memoria[posSeg + offset + 1] = (aux >> 16) & 0x000000FF;
+    mv->memoria[posSeg + offset] = (aux >> 24) & 0x000000FF;
+}
+void POP(maquinaVirtual *mv, int *op){//COMPLETAR/ARREGLAR
+    
+    int aux = 0;
+    int posSeg = (mv->registros[SP] >> 16) & 0x0000000F;
+    int offset = mv->registros[SP] & 0x0000FFFF;
+
+    if ( mv->tablaSegmentos[posSeg][1] < offset ) {
+        printf("ERROR: STACK UNDERFLOW\n");
+        STOP(mv, op);
+    } else {
+
+        aux |= mv->memoria[posSeg + offset] << 24;
+        aux |= (0x00FF0000 & (mv->memoria[posSeg + offset + 1] << 16));
+        aux |= (0x0000FF00 & (mv->memoria[posSeg + offset + 2] << 8));
+        aux |= (0x000000FF & (mv->memoria[posSeg + offset + 3]));
+        setOp(mv, op[0], aux);
+    }
+
+
+    mv->registros[SP] += 4; // Asumiendo tamaño de palabra de 4 bytes
+}
+void CALL(maquinaVirtual *mv, int *op){//COMPLETAR/ARREGLAR
+    
+    int aux;
+
+    mv->registros[SP] -= 4; // Asumiendo tamaño de palabra de 4 bytes
+    short int puntero = mv->registros[SP] & 0x0000FFFF;
+    int posSeg = (mv->registros[SP] >> 16) & 0x0000000F;
+
+    if(mv->registros[SP] < mv->registros[SS]){
+        printf("ERROR: STACK OVERFLOW\n");
+        STOP(mv,op);
+    }else{
+
+        aux = mv->registros[IP];
+
+        mv->memoria[mv->tablaSegmentos[posSeg][0] + puntero + 3] = (aux & 0x000000FF);
+        mv->memoria[mv->tablaSegmentos[posSeg][0] + puntero + 2] = (aux & 0x0000FF00)>>8;
+        mv->memoria[mv->tablaSegmentos[posSeg][0] + puntero + 1] = (aux & 0x00FF0000)>>16;
+        mv->memoria[mv->tablaSegmentos[posSeg][0] + puntero] = (aux & 0xFF000000)>>24;
+
+        mv->registros[IP] = getOp(mv,op[0]);
+    }
+}
+void RET(maquinaVirtual *mv, int *op){//COMPLETAR/ARREGLAR
+    
+    int aux = 0;
+    short int puntero = mv->registros[SP] & 0x0000FFFF;
+    int posSeg = (mv->registros[SP] >> 16) & 0x0000000F;
+
+    if(mv->tablaSegmentos[posSeg][1] < puntero){
+        printf("ERROR: STACK UNDERFLOW\n");
+        STOP(mv,op);
+    }else{
+
+        aux |= mv->memoria[mv->tablaSegmentos[posSeg][0] + puntero] << 24;
+        aux |= (0x00FF0000 & (mv->memoria[mv->tablaSegmentos[posSeg][0] + puntero + 1] << 16));
+        aux |= (0x0000FF00 & (mv->memoria[mv->tablaSegmentos[posSeg][0] + puntero + 2] << 8));
+        aux |= (0x000000FF & (mv->memoria[mv->tablaSegmentos[posSeg][0] + puntero + 3]));
+        mv->registros[IP] = aux;
+
+        mv->registros[SP] += 4; // Asumiendo tamaño de palabra de 4 bytes
+    }
+}
 void STOP(maquinaVirtual *mv, int *op){
     exit(EXIT_SUCCESS);
 }
+
+//------------------- Implementación de readSys y writeSys ------------------//
 
 // Función genérica para almacenar valores en memoria (big-endian)
 void almacenarValorEnMemoria(maquinaVirtual *mv, int dir, int tamanio, int valor) {
@@ -379,3 +463,58 @@ void writeSys(maquinaVirtual *mv, int arg) {
     } 
 }
 
+
+//------------------- Fin de la implementación de nuevas funciones Sys ------------------//
+
+//------------------- Implementación de nuevas funciones Sys ------------------//
+
+void readStringSys(maquinaVirtual *mv){
+
+    char* st;
+    int i = 0;
+
+    gets(st);
+    
+    while ( i < strlen(st) || i < mv->registros[ECX] ) {
+
+        mv->memoria[mv->registros[EDX] + i] = st[i];
+        i++;
+    }
+
+}
+void writeStringSys(maquinaVirtual *mv, int arg){
+    
+    char c;
+
+    int i = 0, ok = 1;
+
+    while( ok ){
+        
+        c = mv->memoria[mv->registros[EDX] + i];
+        if(c == '\0'){
+            ok = 0;
+        }
+        printf("%c",c);
+        i++;
+    }
+    printf("\n");
+}
+void clearScreenSys(maquinaVirtual *mv, int arg){
+    // Lógica para limpiar la pantalla
+    //system("clear"); // En sistemas Unix/Linux
+    system("cls"); // En sistemas Windows
+}
+void breakPointSys(maquinaVirtual *mv, int arg) {
+
+    
+}
+
+void generaArchivoDeImagen(maquinaVirtual mv) {
+
+    FILE *arch;
+    unsigned short int i, tamanio;
+
+    
+}
+
+//------------------- Fin de la implementación de nuevas funciones Sys ------------------//

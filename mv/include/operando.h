@@ -8,6 +8,7 @@ typedef struct operando {
     char tipo;
     char registro;
     int desplazamiento; //o valor inmediato
+    int seccion; //si es AX o AH o EAX, etc
 } operando;
 
 int getReg(maquinaVirtual *mv, int op);
