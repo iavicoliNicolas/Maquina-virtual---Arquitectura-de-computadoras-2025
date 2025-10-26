@@ -27,8 +27,8 @@ int crearParamSegment(maquinaVirtual *mv, int argc, char **argv) {
 
     // Actualizar tabla de segmentos y registro PS
     mv->tablaSegmentos[0][0] = 0;      // Base física del Param Segment
-    mv->tablaSegmentos[0][1] = offset; // Tamano total del segmento
+    mv->tablaSegmentos[0][1] = offset; // Tamaño total del segmento
     mv->registros[PS] = 0x00000000;    // Registro PS apunta al inicio
 
-    return offset; // Retorna el tamano total del Param Segment
+    return offset; // Retorna el tamaño total del Param Segment
 }

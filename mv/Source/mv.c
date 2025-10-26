@@ -72,7 +72,7 @@ void leerMV(maquinaVirtual *mv, FILE* arch, int *version, int paramSize) {
         fprintf(stderr, "Error: Versión no soportada: %d\n", *version);
         exit(EXIT_FAILURE);
     }
-
+   printf("DEBUG: version leída = %d\n", *version); //---------->BORRAR
     // 3. Leer tamaño del segmento de código (2 bytes, little-endian)
     fread(&tamano_codigo, sizeof(unsigned short int), 1, arch);
     tamano_codigo = corrigeSize(tamano_codigo);
@@ -166,6 +166,13 @@ void leerMV(maquinaVirtual *mv, FILE* arch, int *version, int paramSize) {
                 fread(&mv->memoria[mv->tablaSegmentos[0][0]], sizeof(char), tamano_codigo, arch);
                 fread(&mv->memoria[mv->tablaSegmentos[4][0]], sizeof(char), constantes, arch);
             }
+
+            ////Salida de prueba borra
+            printf("Const Segment cargado en [%d..%d), tamaño %d bytes\n",
+            mv->tablaSegmentos[4][0],
+             mv->tablaSegmentos[4][0] + mv->tablaSegmentos[4][1],
+             constantes);
+            //fin "borrar"
            ////   Fin Agrega
             break;
         default:

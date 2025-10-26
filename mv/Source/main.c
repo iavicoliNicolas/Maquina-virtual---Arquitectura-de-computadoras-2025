@@ -21,12 +21,12 @@ int main(int argc, char *argv[]) {
     int indiceParametros = -1;   //  indice donde aparece "-p" //agrega Euge
 
     int tiene_vmx = 0;
-    int tiene_vmi = 0; 
-    
-    int version = 0;
+    int tiene_vmi = 0;
 
+    int version = 0;
+    int paramSize = 0;  //agrega Euge
     mv.memSize = MAX_MEM; // valor por defecto
-    
+
     if (argc < 1) {
         fprintf(stderr, "Archivos insuficientes\n");
         return 0;
@@ -36,17 +36,17 @@ int main(int argc, char *argv[]) {
     for (int i = 1; i < argc; i++) {
 
         if (strcmp(argv[i], "-d") == 0) {
-            desensamblador = 1; 
+            desensamblador = 1;
         }
         //Comentario EUGE
         /*if (strcmp(argv[i], "-p") == 0 && i == argc - 1) {
-            parametros = 1; 
-            
+            parametros = 1;
+
         }*/
        //agrega Euge
         if (strcmp(argv[i], "-p") == 0) {
             parametros = 1;
-            indiceParametros = i + 1;  // guardo posicion del primer parametro
+            indiceParametros = i + 1;  // guardo posicion del primer parametro, para saber que a partir de aca solo hay parametros que se guardan en el param segment
           break;                     //  el resto son parametros, corto aca
         }
         //fin agrega Euge
@@ -81,21 +81,21 @@ int main(int argc, char *argv[]) {
     mv.memoria = (unsigned char *)malloc(mv.memSize * sizeof(unsigned char));
     //Agrega Euge
     // Si hay parámetros, crear el Param Segment antes de leer el VMX
-   int paramSize = 0;
+   
    if (parametros && indiceParametros > 0 && indiceParametros < argc)
     {
       int cantParams = argc - indiceParametros;
-      printf("Creando Param Segment con %d parámetros...\n", cantParams);
+      printf("Creando Param Segment con %d parámetros...\n", cantParams);//-------> para verificar BORRAR
       paramSize = crearParamSegment(&mv, cantParams, &argv[indiceParametros]);
 
-      //para verificar funcuinamiento------->borrar
+      //para verificar funcionamiento--------------------------------------------->borrar
       for (int i = 0; i < paramSize; i++) {
         printf("%02X ", mv.memoria[i]);
         if ((i+1) % 16 == 0)
            printf("\n");
       }
       //fin borrar
-printf("\nTamano Param Segment: %d bytes\n", paramSize);
+    printf("\nTamano Param Segment: %d bytes\n", paramSize);//para verificar funcionamiento---------------------------->borrar
     }
     //Fin Agrega EUge
     FILE* archivo = fopen(vmx_file, "rb");
@@ -108,7 +108,7 @@ printf("\nTamano Param Segment: %d bytes\n", paramSize);
     printf("\nHello maquina virtual\n");
 
     /*Cometa Euge: leerMV(&mv, archivo, &version); // carga el archivo vmx en la memoria de la MV*/
-    leerMV(&mv, archivo, &version, paramSize);// carga el archivo vmx en la memoria de la MV //Cambio: agregue el param size 
+    leerMV(&mv, archivo, &version, paramSize);// carga el archivo vmx en la memoria de la MV //Cambio: agregue el paramsize. Al pasar paramSize, estas garantizando que cada segmento del VMX se carga en memoria sin superponerse con los parametros.
     //printf("Version del archivo: %d\n", version);
     fclose(archivo);
 
@@ -128,15 +128,16 @@ printf("\nTamano Param Segment: %d bytes\n", paramSize);
 
 
 int verificarIntegridadVMX(FILE* arch) {
-    // Verificar que el archivo tiene al menos el tamano minimo de cabecera
+    // Verificar que el archivo tiene al menos el tamaño minimo de cabecera
     fseek(arch, 0, SEEK_END);
     long file_size = ftell(arch);
     fseek(arch, 0, SEEK_SET);
 
-    if (file_size < 7) { // 5 (VMX25) + 1 (version) + 2 (tamano)
-        fprintf(stderr, "Error: Archivo demasiado peque o\n");
+    if (file_size < 7) { // 5 (VMX25) + 1 (version) + 2 (tamaño)
+        fprintf(stderr, "Error: Archivo demasiado pequeno\n");
         return 0;
     }
 
     return 1;
 }
+

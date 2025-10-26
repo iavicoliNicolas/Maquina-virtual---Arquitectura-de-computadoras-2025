@@ -34,7 +34,7 @@ int getMem(maquinaVirtual *mv, int op) {
     //extraer registro y desplazamiento de op
     int reg = (op >> 16) & 0xFF;
     int desplazamiento = op & 0x0000FFFF;
- 
+
     //calcular la direccion efectiva
     int dirL = mv->registros[reg] + desplazamiento;
     int dirF = logicoAFisico(mv, dirL); //convertir direccion logica a fisica
@@ -45,10 +45,10 @@ int getMem(maquinaVirtual *mv, int op) {
         fprintf(stderr, "Error: Lectura de memoria fuera de limites: %d\n", dirF);
         exit(EXIT_FAILURE);
     } else {
-        
+
         valor = ((mv->memoria[dirF] & 0x00FF) << 8) | (mv->memoria[dirF + 1] & 0x00FF);
 
-        setLAR(mv,dirL); 
+        setLAR(mv,dirL);
         setMAR(mv, 4, dirF);
         setMBR(mv, valor);
     }
@@ -88,7 +88,7 @@ void setOp(maquinaVirtual *mv, int op, int num) { //OP1 | OP2
         case 0: //no usado
             break;
         case 1: { //registro
-            mv->registros[getReg(mv, op)] = num; 
+            mv->registros[getReg(mv, op)] = num;
             break;
         }
         case 2: //inmediato
@@ -96,7 +96,7 @@ void setOp(maquinaVirtual *mv, int op, int num) { //OP1 | OP2
             exit(EXIT_FAILURE);
             break;
         case 3: { //memoria
-            mv->memoria[getMem(mv, op)] = num; 
+            mv->memoria[getMem(mv, op)] = num;
             break;
         }
         default:
@@ -106,13 +106,13 @@ void setOp(maquinaVirtual *mv, int op, int num) { //OP1 | OP2
 }
 
 void recuperaOperandos(maquinaVirtual *mv, operando *operandos, int ip) {
-    
+
     char aux;
     int auxInt;
 
     for (int i = 1; i >=0; i--)
     {
-        if (operandos[i].tipo != 0) { 
+        if (operandos[i].tipo != 0) {
             ip++;
             auxInt = 0;
             operandos[i].registro = -1;
@@ -122,15 +122,15 @@ void recuperaOperandos(maquinaVirtual *mv, operando *operandos, int ip) {
                 aux = mv->memoria[ip];
                 operandos[i].registro = aux;
                 operandos[i].desplazamiento = -1;
-    
+
             } else if (operandos[i].tipo == 2) { //si es inmediato
 
                 auxInt |= mv->memoria[ip++];
                 auxInt |= mv->memoria[ip] & 0x00FF;
                 operandos[i].desplazamiento = auxInt;
-    
+
             } else if (operandos[i].tipo == 3) { //si es de memoria
-    
+
                 aux = mv->memoria[ip];
                 ip++;
                 auxInt |= mv->memoria[ip++];
@@ -138,7 +138,7 @@ void recuperaOperandos(maquinaVirtual *mv, operando *operandos, int ip) {
                 operandos[i].desplazamiento = auxInt;
                 operandos[i].registro = aux;
             }
-        } 
+        }
     }
     if(operandos[0].tipo == 0){
         operandos[0].tipo = operandos[1].tipo;
@@ -147,7 +147,7 @@ void recuperaOperandos(maquinaVirtual *mv, operando *operandos, int ip) {
         operandos[1].tipo = 0;
         operandos[1].registro = -1;
         operandos[1].desplazamiento = -1;
-    }   
+    }
 }
 
 

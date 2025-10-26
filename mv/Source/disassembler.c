@@ -142,155 +142,88 @@ void imprimeOperando(operando op) {
             }
 
 }
-int segmentoEsProbableConst(unsigned char *mem, int base, int size) {
-    int i, end;
-    end = base + size;
-    printf("Entra  2\n");
-    for (i = base; i + 5 < end; i += 2) { // mínimo 3 caracteres = 6 bytes
-        int count = 0;
-        while (i + count + 1 < end && isprint(mem[i + count]) && mem[i + count + 1] == 0)
-            count += 2;
-
-        if (count >= 6) // 3 o más caracteres consecutivos
-            return 1;
-    }
-
-    return 0; // no hay cadena de ≥3 caracteres
+static int es_ascii_imprimible(unsigned char c) {
+    return (c >= 32 && c <= 126);
 }
 void mostrarConstSegments(maquinaVirtual mv) {
-    int base, size, s, dir, end, i;
-    unsigned char c;
-    printf("  Dump de primeros bytes del segmento %d:\n  ", s);
-    for (int k = 0; k < 32 && k < size; k++) {
-         printf("%02X ", mv.memoria[base + k]);
-    }
-printf("\n");
-    printf("==> Entró a mostrarConstSegments()\n");
+    // porque tablaSegmentos[4] es CONST.
+    const int SCONST = 4;
 
-    for (s = 0; s < 8; s++) {
-        base = mv.tablaSegmentos[s][0];
-        size = mv.tablaSegmentos[s][1];
-        printf("Segmento %d: base=%d size=%d\n", s, base, size);
+    int base = mv.tablaSegmentos[SCONST][0];
+    int size = mv.tablaSegmentos[SCONST][1];
+    if (size <= 0) return;
 
-        if (size <= 0) {
-            printf("  Segmento %d vacío, se salta.\n", s);
+    int dir = base;
+    int end = base + size;
+
+    while (dir < end) {
+        int start = dir;
+
+        // 1) Intentar ASCII: secuencia de [isprint]+ '\0'
+        int ascii_len = 0;
+        while (start + ascii_len < end && es_ascii_imprimible(mv.memoria[start + ascii_len])) {
+            ascii_len++;
+        }
+        if (ascii_len > 0 && start + ascii_len < end && mv.memoria[start + ascii_len] == 0x00) {
+            int total = ascii_len + 1; // incluye terminador '\0'
+
+            // [addr] bytes (máx 7 con '..' si excede)
+            printf("[%04X] ", start);
+            int hex_show = (total > 7 ? 6 : total);
+            for (int i = 0; i < hex_show; i++) printf("%02X ", mv.memoria[start + i]);
+            if (total > 7) printf(".. ");
+            else for (int i = hex_show; i < 7; i++) printf("   ");
+
+            // | "texto..."
+            printf("| \"");
+            for (int i = 0; i < ascii_len; i++) {
+                unsigned char c = mv.memoria[start + i];
+                printf("%c", es_ascii_imprimible(c) ? c : '.');
+            }
+            printf("\"\n");
+
+            dir = start + total;
             continue;
         }
 
-        dir = base;
-        end = base + size;
-
-        printf("  Analizando desde %d hasta %d\n", dir, end);
-
-        while (dir + 5 < end) { // mínimo 3 caracteres UTF-16LE
-            int start = dir;
-            int strlen_bytes = 0;
-
-            // contar caracteres consecutivos UTF-16LE imprimibles
-            while (dir + strlen_bytes + 1 < end &&
-                   isprint(mv.memoria[dir + strlen_bytes]) &&
-                   mv.memoria[dir + strlen_bytes + 1] == 0)
-            {
-                strlen_bytes += 2;
-            }
-
-            if (strlen_bytes > 0)
-                printf("  Pos %d: encontró posible texto UTF16 de %d bytes\n", start, strlen_bytes);
-
-            // ahora verificar que haya terminador 0x00 0x00 inmediatamente después
-            if (strlen_bytes >= 6 && dir + strlen_bytes + 1 < end &&
-                mv.memoria[dir + strlen_bytes] == 0 &&
-                mv.memoria[dir + strlen_bytes + 1] == 0)
-            {
-                printf("  Cadena válida detectada en %d (len=%d)\n", start, strlen_bytes);
-
-                strlen_bytes += 2; // incluir terminador
-
-                // imprimir dirección y HEX limitado a 7 bytes
-                printf("[%04X] ", start);
-                int hex_show = (strlen_bytes > 7 ? 7 : strlen_bytes);
-                for (i = 0; i < hex_show; i++)
-                    printf("%02X ", mv.memoria[start + i]);
-                if (strlen_bytes > 7)
-                    printf(".. ");
-                else
-                    for (i = hex_show; i < 7; i++)
-                        printf("   ");
-
-                // imprimir ASCII completa
-                printf(" | \"");
-                for (i = 0; i < strlen_bytes - 2; i += 2) // -2 para no imprimir terminador
-                    printf("%c", mv.memoria[start + i]);
-                printf("\"\n");
-
-                dir += strlen_bytes; // avanzar al siguiente bloque
-            } else {
-                if (strlen_bytes > 0)
-                    printf("  En %d había %d bytes imprimibles pero no terminador UTF16.\n",
-                           start, strlen_bytes);
-                dir += 2; // no es cadena válida, avanzar
-            }
+        // 2) Intentar UTF-16LE: (c,0x00) ... (c,0x00)  +  terminador 0x00 0x00
+        // Requiere al menos 1 carácter + terminador.
+        int ulen = 0; // bytes de pares (c,0)
+        while (start + ulen + 1 < end &&
+               es_ascii_imprimible(mv.memoria[start + ulen]) &&
+               mv.memoria[start + ulen + 1] == 0x00) {
+            ulen += 2;
         }
-    }
+        if (ulen >= 2 && start + ulen + 1 < end &&
+            mv.memoria[start + ulen] == 0x00 && mv.memoria[start + ulen + 1] == 0x00) {
 
-    printf("<== Sale de mostrarConstSegments()\n");
+            int total = ulen + 2; // incluye terminador 0x00 0x00
+
+            printf("[%04X] ", start);
+            int hex_show = (total > 7 ? 6 : total);
+            for (int i = 0; i < hex_show; i++) printf("%02X ", mv.memoria[start + i]);
+            if (total > 7) printf(".. ");
+            else for (int i = hex_show; i < 7; i++) printf("   ");
+
+            printf("| \"");
+            for (int i = 0; i < ulen; i += 2) {
+                unsigned char c = mv.memoria[start + i];         // byte bajo (ASCII)
+                // mv.memoria[start + i + 1] es 0x00
+                printf("%c", es_ascii_imprimible(c) ? c : '.');
+            }
+            printf("\"\n");
+
+            dir = start + total;
+            continue;
+        }
+
+        // 3) No es inicio de cadena válida -> avanzar 1 byte
+        dir++;
+    }
 }
 
-/*void mostrarConstSegments(maquinaVirtual mv) {
-    int base, size, s, dir, end, i;
-    unsigned char c;
-    printf("Entraaaaaa\n");
-    for (s = 0; s < 8; s++) {
-        base = mv.tablaSegmentos[s][0];
-        size = mv.tablaSegmentos[s][1];
-        if (size <= 0) continue;
 
-        dir = base;
-        end = base + size;
 
-        while (dir + 5 < end) { // mínimo 3 caracteres UTF-16LE
-            int start = dir;
-            int strlen_bytes = 0;
-
-            // contar caracteres consecutivos UTF-16LE imprimibles
-            while (dir + strlen_bytes + 1 < end &&
-                   isprint(mv.memoria[dir + strlen_bytes]) &&
-                   mv.memoria[dir + strlen_bytes + 1] == 0)
-            {
-                strlen_bytes += 2;
-            }
-
-            // ahora verificar que haya terminador 0x00 0x00 inmediatamente después
-            if (strlen_bytes >= 6 && dir + strlen_bytes + 1 < end &&
-                mv.memoria[dir + strlen_bytes] == 0 &&
-                mv.memoria[dir + strlen_bytes + 1] == 0)
-            {
-                strlen_bytes += 2; // incluir terminador
-
-                // imprimir dirección y HEX limitado a 7 bytes
-                printf("[%04X] ", start);
-                int hex_show = (strlen_bytes > 7 ? 7 : strlen_bytes);
-                for (i = 0; i < hex_show; i++)
-                    printf("%02X ", mv.memoria[start + i]);
-                if (strlen_bytes > 7)
-                    printf(".. ");
-                else
-                    for (i = hex_show; i < 7; i++)
-                        printf("   ");
-
-                // imprimir ASCII completa
-                printf(" | \"");
-                for (i = 0; i < strlen_bytes - 2; i += 2) // -2 para no imprimir terminador
-                    printf("%c", mv.memoria[start + i]);
-                printf("\"\n");
-
-                dir += strlen_bytes; // avanzar al siguiente bloque
-            } else {
-                dir += 2; // no es cadena válida, avanzar al siguiente UTF-16LE
-            }
-        }
-    }
-}*/
 
 
 
