@@ -27,6 +27,7 @@ int main(int argc, char *argv[]) {
     int paramSize = 0;  //agrega Euge
     mv.memSize = MAX_MEM; // valor por defecto
 
+
     if (argc < 1) {
         fprintf(stderr, "Archivos insuficientes\n");
         return 0;
@@ -48,6 +49,7 @@ int main(int argc, char *argv[]) {
             parametros = 1;
             indiceParametros = i + 1;  // guardo posicion del primer parametro, para saber que a partir de aca solo hay parametros que se guardan en el param segment
           break;                     //  el resto son parametros, corto aca
+
         }
         //fin agrega Euge
         if (strncmp(argv[i], "-m", 2) == 0) {

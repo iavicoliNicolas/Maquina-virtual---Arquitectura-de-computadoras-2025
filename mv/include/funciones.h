@@ -49,6 +49,10 @@ void JNN(maquinaVirtual *mv, int *op);
 void LDL(maquinaVirtual *mv, int *op);
 void LDH(maquinaVirtual *mv, int *op);
 void NOT(maquinaVirtual *mv, int *op);
+void PUSH(maquinaVirtual *mv, int *op);
+void POP(maquinaVirtual *mv, int *op);
+void CALL(maquinaVirtual *mv, int *op);
+void RET(maquinaVirtual *mv, int *op);
 void STOP(maquinaVirtual *mv, int *op);
 
 //funciones de la llamada sys
