@@ -11,9 +11,8 @@ typedef struct{
     operando operandos[2];
 }InstruccionDisassembler;
 
-static inline unsigned char r8(char *mem, int pos);
-
-static inline unsigned short r16(char *mem, int pos);
+unsigned char r8(unsigned char *mem, int pos);
+unsigned short r16(unsigned char *mem, int pos);
 
 
 extern const char* nombres_registros[32];

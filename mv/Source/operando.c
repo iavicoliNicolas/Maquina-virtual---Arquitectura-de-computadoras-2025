@@ -124,7 +124,7 @@ void setOp(maquinaVirtual *mv, int op, int num) { //OP1 | OP2
         case 0: //no usado
             break;
         case 1: { //registro
-            mv->registros[getReg(mv, op)] = num; 
+            mv->registros[getReg(mv, op)] = num;
             break;
         }
         case 2: //inmediato
@@ -132,7 +132,7 @@ void setOp(maquinaVirtual *mv, int op, int num) { //OP1 | OP2
             exit(EXIT_FAILURE);
             break;
         case 3: { //memoria
-            mv->memoria[getMem(mv, op)] = num; 
+            mv->memoria[getMem(mv, op)] = num;
             break;
         }
         default:
@@ -142,13 +142,13 @@ void setOp(maquinaVirtual *mv, int op, int num) { //OP1 | OP2
 }
 
 void recuperaOperandos(maquinaVirtual *mv, operando *operandos, int ip) {
-    
+
     char aux;
     int auxInt, auxSec, auxReg;
 
     for (int i = 1; i >=0; i--)
     {
-        if (operandos[i].tipo != 0) { 
+        if (operandos[i].tipo != 0) {
             ip++;
             auxInt = 0;
             operandos[i].registro = -1;
@@ -171,7 +171,7 @@ void recuperaOperandos(maquinaVirtual *mv, operando *operandos, int ip) {
                 auxInt |= mv->memoria[ip++];
                 auxInt |= mv->memoria[ip] & 0x00FF;
                 operandos[i].desplazamiento = auxInt;
-    
+
             } else if (operandos[i].tipo == 3) { //si es de memoria
     
                 //leo en un auxiliar el byte que dice el registro en el que se va a almacenar
@@ -190,7 +190,7 @@ void recuperaOperandos(maquinaVirtual *mv, operando *operandos, int ip) {
                 //printf("desplazamiento t mem op 1 %d\n",aux);
                 //printf("registro t mem op 1 %d\n",aux);
             }
-        } 
+        }
     }
     if(operandos[0].tipo == 0){
         operandos[0].tipo = operandos[1].tipo;
@@ -203,36 +203,3 @@ void recuperaOperandos(maquinaVirtual *mv, operando *operandos, int ip) {
         operandos[1].seccion = -1;
     }   
 }
-
-void imprimeOperando(operando op) {
-    switch (op.tipo) {
-        case 0: // ninguno
-            break;
-
-        case 1: // registro
-            if (op.registro >= 0 && op.registro < 32 && nombres_registros[op.registro])
-                printf("%s", nombres_registros[op.registro]);
-            else
-                printf("reg%d", op.registro); // por si es reservado
-            break;
-
-        case 2: // inmediato 
-            printf("%d", op.desplazamiento);
-            break;
-
-        case 3: // memoria 
-            printf("[");
-            if (op.registro != 0 && op.registro < 32 && nombres_registros[op.registro]) {
-                printf("%s", nombres_registros[op.registro]);
-                if (op.desplazamiento) {
-                    printf(" + %d", op.desplazamiento);
-                }
-            } else {
-                // acceso directo a memoria (sin registro base)
-                printf("%d", op.desplazamiento);
-            }
-            printf("]");
-            break;
-    }
-}
-

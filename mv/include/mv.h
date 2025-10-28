@@ -56,7 +56,7 @@ void setReg(maquinaVirtual *mv, int reg, int valor);
 int getReg(maquinaVirtual *mv, int reg);
 
 //lectura de memoria a la maquina virtual
-void leerMV( maquinaVirtual *mv, FILE* arch, int *version); 
+void leerMV( maquinaVirtual *mv, FILE* arch, int *version,int paramSize);
 
 //ejecucion de la maquina virtual
 static inline unsigned char leePos(char *mem, int pos);

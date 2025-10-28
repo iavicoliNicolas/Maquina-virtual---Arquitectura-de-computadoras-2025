@@ -48,10 +48,14 @@
 		<Unit filename="Source/operando.c">
 			<Option compilerVar="CC" />
 		</Unit>
+		<Unit filename="Source/paramsegment.c">
+			<Option compilerVar="CC" />
+		</Unit>
 		<Unit filename="include/disassembler.h" />
 		<Unit filename="include/funciones.h" />
 		<Unit filename="include/mv.h" />
 		<Unit filename="include/operando.h" />
+		<Unit filename="include/paramsegment.h" />
 		<Extensions>
 			<lib_finder disable_auto="1" />
 		</Extensions>
