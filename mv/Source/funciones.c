@@ -1,6 +1,7 @@
 #include "funciones.h"
 #include "operando.h"
 #include "mv.h"
+#include "vmi.h" // para usar guardarVMI
 void cargaVF(Toperaciones *v){
     //operaciones de 2 operandos
     v[0x10] = MOV;
@@ -43,6 +44,12 @@ void loadSYSOperationArray(funcionSys *vecLlamadas){
     vecLlamadas[0] = NULL; //no hay operacion 0
     vecLlamadas[1] = readSys;
     vecLlamadas[2] = writeSys;
+    //Aagrega Euge
+    vecLlamadas[3] = sysREADSTR; // SYS 3
+    vecLlamadas[4] = sysWRITESTR;// SYS 4
+    vecLlamadas[5] = sysCLEAR;   // SYS 5
+    vecLlamadas[6] = sysBREAKPOINT; // SYS 6
+    //fin agrega Euge
 }
 
 void setLAR(maquinaVirtual *mv, int dirL) {
@@ -158,11 +165,11 @@ void SYS(maquinaVirtual *mv, int *op) {
     // Obtener el número de syscall del operando inmediato
     int llamada = getOp(mv, op[0]); // Asumo que getOp devuelve el número
 
-    funcionSys vecLlamadas[3];
+    funcionSys vecLlamadas[7];
     loadSYSOperationArray(vecLlamadas);
 
-    if (llamada >= 1 && llamada <= 2) {
-        vecLlamadas[llamada](mv, llamada);
+    if (llamada >= 1 && llamada <= 6) {
+        vecLlamadas[llamada](mv);
     } else {
         fprintf(stderr, "Error: Llamada al sistema no válida: %d\n", llamada);
         exit(EXIT_FAILURE);
@@ -212,7 +219,7 @@ void NOT(maquinaVirtual *mv, int *op){
     setOp(mv, op[0], ~getOp(mv, op[0]));
 }
 void PUSH(maquinaVirtual *mv, int *op){ //COMPLETAR/ARREGLAR
-    
+
     int aux;
     int posSeg = (mv->registros[SP] >> 16) & 0x0000000F;
     int offset = mv->registros[SP] & 0x0000FFFF;
@@ -221,7 +228,7 @@ void PUSH(maquinaVirtual *mv, int *op){ //COMPLETAR/ARREGLAR
     if ( mv->memoria[SP] < mv->memoria[SS] ) {
         printf("ERROR: STACK OVERFLOW\n");
         STOP(mv, op);
-    } 
+    }
     aux = getOp(mv, op[0]);
     mv->memoria[posSeg + offset + 3] = (aux & 0x000000FF);
     mv->memoria[posSeg + offset + 2] = (aux >> 8) & 0x000000FF;
@@ -229,7 +236,7 @@ void PUSH(maquinaVirtual *mv, int *op){ //COMPLETAR/ARREGLAR
     mv->memoria[posSeg + offset] = (aux >> 24) & 0x000000FF;
 }
 void POP(maquinaVirtual *mv, int *op){//COMPLETAR/ARREGLAR
-    
+
     int aux = 0;
     int posSeg = (mv->registros[SP] >> 16) & 0x0000000F;
     int offset = mv->registros[SP] & 0x0000FFFF;
@@ -250,7 +257,7 @@ void POP(maquinaVirtual *mv, int *op){//COMPLETAR/ARREGLAR
     mv->registros[SP] += 4; // Asumiendo tamaño de palabra de 4 bytes
 }
 void CALL(maquinaVirtual *mv, int *op){//COMPLETAR/ARREGLAR
-    
+
     int aux;
 
     mv->registros[SP] -= 4; // Asumiendo tamaño de palabra de 4 bytes
@@ -273,7 +280,7 @@ void CALL(maquinaVirtual *mv, int *op){//COMPLETAR/ARREGLAR
     }
 }
 void RET(maquinaVirtual *mv, int *op){//COMPLETAR/ARREGLAR
-    
+
     int aux = 0;
     short int puntero = mv->registros[SP] & 0x0000FFFF;
     int posSeg = (mv->registros[SP] >> 16) & 0x0000000F;
@@ -460,21 +467,21 @@ void writeSys(maquinaVirtual *mv, int arg) {
         }
 
         printf("\n");
-    } 
+    }
 }
 
 
 //------------------- Fin de la implementación de nuevas funciones Sys ------------------//
 
 //------------------- Implementación de nuevas funciones Sys ------------------//
-
+/*
 void readStringSys(maquinaVirtual *mv){
 
     char* st;
     int i = 0;
 
     gets(st);
-    
+
     while ( i < strlen(st) || i < mv->registros[ECX] ) {
 
         mv->memoria[mv->registros[EDX] + i] = st[i];
@@ -483,13 +490,13 @@ void readStringSys(maquinaVirtual *mv){
 
 }
 void writeStringSys(maquinaVirtual *mv, int arg){
-    
+
     char c;
 
     int i = 0, ok = 1;
 
     while( ok ){
-        
+
         c = mv->memoria[mv->registros[EDX] + i];
         if(c == '\0'){
             ok = 0;
@@ -506,15 +513,58 @@ void clearScreenSys(maquinaVirtual *mv, int arg){
 }
 void breakPointSys(maquinaVirtual *mv, int arg) {
 
-    
+
 }
+*/
 
-void generaArchivoDeImagen(maquinaVirtual mv) {
-
-    FILE *arch;
-    unsigned short int i, tamanio;
-
-    
-}
 
 //------------------- Fin de la implementación de nuevas funciones Sys ------------------//
+
+//***********Agrega E
+//-------------------NUEVAS FUNCIONES SYS EXTENDIDAS (MV Parte II)--------------------
+
+void sysREADSTR(maquinaVirtual *mv) {
+    int base = mv->registros[EDX];                 // dirección lógica destino
+    int size = mv->registros[ECX] & 0xFFFF;        // cantidad máxima de bytes
+    int dirFis = logicoAFisico(mv, base);
+
+    printf("[SYS 3: READSTR] Ingrese texto: ");
+    for (int i = 0; i < size - 1; i++) {
+        char c = getchar();
+        if (c == '\n' || c == EOF) {
+            mv->memoria[dirFis + i] = '\0';
+            return;
+        }
+        mv->memoria[dirFis + i] = c;
+    }
+    mv->memoria[dirFis + size - 1] = '\0';
+}
+
+void sysWRITESTR(maquinaVirtual *mv) {
+    int base = mv->registros[EDX];      // dirección lógica origen
+    int dirFis = logicoAFisico(mv, base);
+
+    printf("[SYS 4: WRITESTR] ");
+    while (mv->memoria[dirFis] != '\0') {
+        putchar(mv->memoria[dirFis]);
+        dirFis++;
+    }
+    printf("\n");
+}
+
+void sysCLEAR(maquinaVirtual *mv) {
+#ifdef _WIN32
+    system("cls");
+#else
+    system("clear");
+#endif
+    printf("[SYS 5: CLEAR] Consola limpiada.\n");
+}
+
+void sysBREAKPOINT(maquinaVirtual *mv) {
+    printf("\n[SYS 6: BREAKPOINT] Ejecución pausada. Guardando imagen...\n");
+    guardarVMI(mv, "breakpoint.vmi");
+    printf("[SYS 6: BREAKPOINT] Imagen guardada en breakpoint.vmi\n");
+    exit(0); // detener ejecución
+}
+//**Fin Agrega E
