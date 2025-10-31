@@ -165,7 +165,7 @@ void mostrarConstSegments(maquinaVirtual mv) {
             ascii_len++;
         }
         if (ascii_len > 0 && start + ascii_len < end && mv.memoria[start + ascii_len] == 0x00) {
-            int total = ascii_len + 1; // incluye terminador '\0'
+            int total = ascii_len + 1; // incluye '\0'
 
             // [addr] bytes (máx 7 con '..' si excede)
             printf("[%04X] ", start);
@@ -186,7 +186,7 @@ void mostrarConstSegments(maquinaVirtual mv) {
             continue;
         }
 
-        // 2) Intentar UTF-16LE: (c,0x00) ... (c,0x00)  +  terminador 0x00 0x00
+        // 2) Intentar UTF-16LE: (c,0x00) ... (c,0x00)  +  \0
         // Requiere al menos 1 carácter + terminador.
         int ulen = 0; // bytes de pares (c,0)
         while (start + ulen + 1 < end &&
@@ -197,7 +197,7 @@ void mostrarConstSegments(maquinaVirtual mv) {
         if (ulen >= 2 && start + ulen + 1 < end &&
             mv.memoria[start + ulen] == 0x00 && mv.memoria[start + ulen + 1] == 0x00) {
 
-            int total = ulen + 2; // incluye terminador 0x00 0x00
+            int total = ulen + 2; // incluye 0\
 
             printf("[%04X] ", start);
             int hex_show = (total > 7 ? 6 : total);
