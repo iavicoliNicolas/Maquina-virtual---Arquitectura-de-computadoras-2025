@@ -197,7 +197,7 @@ void mostrarConstSegments(maquinaVirtual mv) {
         if (ulen >= 2 && start + ulen + 1 < end &&
             mv.memoria[start + ulen] == 0x00 && mv.memoria[start + ulen + 1] == 0x00) {
 
-            int total = ulen + 2; // incluye 0\
+            int total = ulen + 2; // incluye "0\"
 
             printf("[%04X] ", start);
             int hex_show = (total > 7 ? 6 : total);
@@ -230,23 +230,41 @@ void mostrarConstSegments(maquinaVirtual mv) {
 /* Retorna la dirección física del IP actual (con registro IP).
   IP contiene: 16 bits altos = índice en tabla de segmentos; 16 bits bajos = offset (desplazamiento en el seg)
 */
-unsigned int ipFisicaDesdeRegistroIP(maquinaVirtual mv) {
+unsigned int ipFisicaDesdeRegistroIP(maquinaVirtual mv,int version) {
     unsigned int ip_reg,seg_index,offset;
     int base,size;
     ip_reg = mv.registros[3]; // IP
     seg_index = (ip_reg >> 16) & 0xFFFF;
     offset = ip_reg & 0xFFFF;
-    if (seg_index < 8) {
+
+     if (version == 1) {
+        // --- Formato VMX Parte I ---
+        seg_index = (ip_reg >> 16) & 0xFFFF;
+        if (seg_index >= 8) {
+            fprintf(stderr, "Error: segmento inválido (%u)\n", seg_index);
+            exit(EXIT_FAILURE);
+        }
         base = mv.tablaSegmentos[seg_index][0];
         size = mv.tablaSegmentos[seg_index][1];
-        return (unsigned int)(base + offset);
     }
-    else {
-        return 0xFFFFFFFF; // invalido
+    else 
+    if (version == 2) {
+        // VMX versión 2: bits altos = base física del segmento de código
+        base = mv.tablaSegmentos[0][0];  // segmento 0 = código
+        size = mv.tablaSegmentos[0][1];
     }
+
+    if (offset >= size) {
+        fprintf(stderr,
+                "Error: fallo de segmento. Offset %u fuera del rango del código (size=%d)\n",
+                offset, size);
+        exit(EXIT_FAILURE);
+    }
+
+    return base + offset;
 }
 
-void disassembler(maquinaVirtual mv) {
+void disassembler(maquinaVirtual mv,int version) {
     int base_cs, size_cs, end_cs, ip;
     unsigned char b0;
     unsigned int reg_cs,seg_index,entry_fis;
@@ -267,7 +285,7 @@ void disassembler(maquinaVirtual mv) {
     }
     end_cs  = base_cs + size_cs;
     //calculo punto de entrada (para marcar con'>')
-    entry_fis = ipFisicaDesdeRegistroIP(mv);
+    entry_fis = ipFisicaDesdeRegistroIP(mv,version);
 
     mostrarConstSegments(mv);
 

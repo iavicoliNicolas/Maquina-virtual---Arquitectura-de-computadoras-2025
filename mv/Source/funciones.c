@@ -2,6 +2,10 @@
 #include "operando.h"
 #include "mv.h"
 #include "vmi.h" // para usar guardarVMI
+void sysREADSTR(maquinaVirtual *mv);
+void sysWRITESTR(maquinaVirtual *mv);
+void sysCLEAR(maquinaVirtual *mv);
+void sysBREAKPOINT(maquinaVirtual *mv);
 void cargaVF(Toperaciones *v){
     //operaciones de 2 operandos
     v[0x10] = MOV;

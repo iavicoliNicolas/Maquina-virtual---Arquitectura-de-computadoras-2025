@@ -10,7 +10,8 @@
 //funciones de la maquina virtual
 //tipo de funcion para operaciones de la maquina virtual
 typedef void (*Toperaciones)(maquinaVirtual *, int*);
-typedef void (*funcionSys)(maquinaVirtual *, int);
+//typedef void (*funcionSys)(maquinaVirtual *, int);
+typedef void (*funcionSys)(maquinaVirtual *);
 
 void cargaVF(Toperaciones *);
 void loadSYSOperationArray(funcionSys *vecLlamadas);

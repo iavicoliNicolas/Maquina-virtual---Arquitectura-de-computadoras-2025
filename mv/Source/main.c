@@ -5,7 +5,7 @@
 #include "../include/mv.h"
 #include "../include/paramsegment.h"
 #include "../include/vmi.h"
-
+#include <sys/stat.h>
 int verificarIntegridadVMX(FILE* arch);
 
 int main(int argc, char *argv[]) {
@@ -131,7 +131,7 @@ int main(int argc, char *argv[]) {
     // ================================================================
     if (desensamblador)
     {   printf("\n=== DESASSEMBLER ===\n");
-        disassembler(mv);
+        disassembler(mv,version);
     }
     // ================================================================
     //   SECCIÓN 6: EJECUCIÓN DEL PROGRAMA

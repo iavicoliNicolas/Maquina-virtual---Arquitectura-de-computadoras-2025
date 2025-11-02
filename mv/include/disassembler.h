@@ -20,5 +20,5 @@ typedef void (*funcionDisassembler)(InstruccionDisassembler );
 
 void cargaVectorDisassembler(funcionDisassembler *v);
 
-void disassembler(maquinaVirtual mv);
+void disassembler(maquinaVirtual mv, int version);
 #endif
