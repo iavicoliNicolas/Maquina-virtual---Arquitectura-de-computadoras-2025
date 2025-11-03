@@ -284,6 +284,8 @@ void disassembler(maquinaVirtual mv,int version) {
         }
     }
     end_cs  = base_cs + size_cs;
+    
+      
     //calculo punto de entrada (para marcar con'>')
     entry_fis = ipFisicaDesdeRegistroIP(mv,version);
 
@@ -299,12 +301,17 @@ void disassembler(maquinaVirtual mv,int version) {
         tipoB = (b0 >> 6) & 0x03; // bits 7–6
         tipoA = (b0 >> 4) & 0x03; // bits 5–4
         codOp = b0 & 0x1F;
-
+        
+        if (codOp == 0x0E || codOp == 0x0F)
+        {  tipoA = 0;
+           tipoB = 0;
+        }
         // decodificar operandos en orden inverso
         ip += decodificaOperando(mv, ip, tipoB, &opB);
         ip += decodificaOperando(mv, ip, tipoA, &opA);
 
         int instr_len = ip - start_ip; // long total de instrucción
+
 
         // marca punto de entrada
         if ((unsigned int)direccion == entry_fis)

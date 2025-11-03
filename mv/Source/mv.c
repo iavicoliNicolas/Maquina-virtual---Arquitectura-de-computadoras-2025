@@ -50,7 +50,7 @@ void setReg(maquinaVirtual *mv, int reg, int valor) {
 // CAMBIO: agrego offsetInicial (para respetar el Param Segment si existe)
 void leerMV(maquinaVirtual *mv, FILE* arch, int *version, int paramSize) {
     char cabecera[6];
-    unsigned short int tamano_codigo, constantes, longitudSeg[5], offset,offsetInicial;
+    unsigned short int tamano_codigo, constantes, longitudSeg[5],offsetInicial;
     int i, totalLongitud = 0;
     int ultSegmento = 0;
     int ordenSegmento[6] = {PS,KS,CS,DS,ES,SS};
@@ -73,9 +73,6 @@ void leerMV(maquinaVirtual *mv, FILE* arch, int *version, int paramSize) {
         exit(EXIT_FAILURE);
     }
    printf("DEBUG: version leída = %d\n", *version); //---------->BORRAR
-    // 3. Leer tamaño del segmento de código (2 bytes, little-endian)
-    fread(&tamano_codigo, sizeof(unsigned short int), 1, arch);
-    tamano_codigo = corrigeSize(tamano_codigo);
 
 
     // Inicializar registros
@@ -119,11 +116,14 @@ void leerMV(maquinaVirtual *mv, FILE* arch, int *version, int paramSize) {
             break;
 
         case 2: // Código específico para la versión 2
-
+        {   offsetInicial = paramSize;
             fread(longitudSeg, sizeof(unsigned short int), 5, arch);
+            for (i = 0; i < 5; i++)
+                  longitudSeg[i] = corrigeSize(longitudSeg[i]);
+
+            printf("DEBUG v2 lengths: CS=%u DS=%u ES=%u SS=%u KS=%u\n", longitudSeg[0], longitudSeg[1], longitudSeg[2], longitudSeg[3], longitudSeg[4]);
             for ( i = 0; i < 5; i++ )
             {
-                longitudSeg[i] = corrigeSize(longitudSeg[i]);
                 if (longitudSeg[i] > 0)
                 {
                     totalLongitud += longitudSeg[i];
@@ -150,6 +150,8 @@ void leerMV(maquinaVirtual *mv, FILE* arch, int *version, int paramSize) {
                     }
 
                 } else {
+                    mv->tablaSegmentos[i][0] = -1;
+                    mv->tablaSegmentos[i][1] = 0;
                     mv->registros[ordenSegmento[i+1]] = -1; // Si el segmento no existe, el registro apunta a 0
                 }
             }
@@ -167,20 +169,19 @@ void leerMV(maquinaVirtual *mv, FILE* arch, int *version, int paramSize) {
             if (totalLongitud + offsetInicial > mv->memSize) {
                 fprintf(stderr, "Error: Memoria insuficiente. Se requieren %d bytes.\n", totalLongitud + offsetInicial);
                 exit(EXIT_FAILURE);
-            } else {
-                fread(&mv->memoria[mv->tablaSegmentos[0][0]], sizeof(char), tamano_codigo, arch);
-                fread(&mv->memoria[mv->tablaSegmentos[4][0]], sizeof(char), constantes, arch);
+            }
+            else
+            {     // Cargar código y constantes si existen
+                  if (tamano_codigo > 0)
+                     fread(&mv->memoria[mv->tablaSegmentos[0][0]], sizeof(char), tamano_codigo, arch);
+                  if (constantes > 0)
+                    fread(&mv->memoria[mv->tablaSegmentos[4][0]], sizeof(char), constantes, arch);
             }
 
-            ////Salida de prueba borra
-            printf("Const Segment cargado en [%d..%d), tamaño %d bytes\n",
-            mv->tablaSegmentos[4][0],
-             mv->tablaSegmentos[4][0] + mv->tablaSegmentos[4][1],
-             constantes);
-            //fin "borrar"
-           ////   Fin Agrega
-            break;
-        default:
+            // Si faltan completar entradas 5..7
+             for (i = 5; i < 8; i++)
+                  mv->tablaSegmentos[i][0] = mv->tablaSegmentos[i][1] = -1;
+
             break;
         }
 
@@ -192,7 +193,7 @@ void leerMV(maquinaVirtual *mv, FILE* arch, int *version, int paramSize) {
     mv->registros[IP] = mv->registros[CS]; // Inicializar IP al inicio del segmento de código
     mv->registros[CC] = 0;                  // Condition Code inicial
 }
-
+}
 //-------------------------Funciones de la ejecucion de la MV-------------------------//
 
 // Función para leer la instrucción en la posición del registro IP
