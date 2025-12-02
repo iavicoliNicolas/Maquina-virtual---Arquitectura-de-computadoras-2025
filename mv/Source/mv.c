@@ -216,7 +216,7 @@ void ejecutarMV(maquinaVirtual *mv, int version) {
     Toperaciones v[32];
     cargaVF(v);
 
-    funcionSys vecLlamadas[2];
+    funcionSys vecLlamadas[6];
     loadSYSOperationArray(vecLlamadas);
 
     //Ciclo de ejecucion
@@ -266,4 +266,118 @@ void ejecutarMV(maquinaVirtual *mv, int version) {
     printf("\nEjecucion finalizada\n");
 }
 
+//------------------ Funcion de acceso empleo de archivo .vmi ------------------//
+
+/*
+Header .vmi:
+- 5 bytes: "VMI25"
+version
+- 1 byte: version (actualmente 2)
+tamaño de la memoria
+-2 bytes: tamaño de la memoria (little-endian)
+
+Registros de la MV
+- 32 registros de 4 bytes cada uno (little-endian) = 128 bytes
+Entradas de tabla descriptora de segmentos
+- 8 entradas de 4 bytes cada una (little-endian) = 32 bytes
+Contenido de la memoria
+- n bytes: contenido de la memoria de la MV
+*/
+
+void escribeVMI(maquinaVirtual *mv, const char *nombreArchivo) {
+    FILE *arch = fopen(nombreArchivo, "wb");
+    if (arch == NULL) {
+        fprintf(stderr, "Error: No se pudo crear el archivo VMI: %s\n", nombreArchivo);
+        exit(EXIT_FAILURE);
+    }
+
+    // Escribir cabecera "VMI25"
+    const char *cabecera = "VMI25";
+    fwrite(cabecera, sizeof(char), 5, arch);
+
+    // Escribir versión (1 byte)
+    unsigned char version = 2;
+    fwrite(&version, sizeof(unsigned char), 1, arch);
+
+    // Escribir tamaño de memoria (4 bytes, little-endian)
+    unsigned int memSizeLE = ((mv->memSize & 0xFF00) >> 8) | ((mv->memSize & 0x00FF) << 8);
+    fwrite(&memSizeLE, sizeof(unsigned int), 1, arch);
+
+    // Escribir registros de la MV (32 registros de 4 bytes cada uno, little-endian)
+    for (int i = 0; i < MAX_REG; i++) {
+        unsigned int regLE = ((mv->registros[i] & 0xFF00FF00) >> 8) | ((mv->registros[i] & 0x00FF00FF) << 8);
+        fwrite(&regLE, sizeof(unsigned int), 1, arch);
+    }
+
+    // Escribir entradas de la tabla descriptora de segmentos (8 entradas de 4 bytes cada una, little-endian)
+    for (int i = 0; i < MAX_SEG; i++) {
+        for (int j = 0; j < 2; j++) {
+            unsigned int entradaLE = ((mv->tablaSegmentos[i][j] & 0xFF00FF00) >> 8) | ((mv->tablaSegmentos[i][j] & 0x00FF00FF) << 8);
+            fwrite(&entradaLE, sizeof(unsigned int), 1, arch);
+        }
+    }
+
+    // Escribir contenido de la memoria
+    fwrite(mv->memoria, sizeof(unsigned char), mv->memoriaUsada, arch);
+
+    fclose(arch);
+}
+
+void leeVMI(maquinaVirtual *mv, const char *nombreArchivo) {
+    FILE *arch = fopen(nombreArchivo, "rb");
+    if (arch == NULL) {
+        fprintf(stderr, "Error: No se pudo abrir el archivo VMI: %s\n", nombreArchivo);
+        exit(EXIT_FAILURE);
+    }
+
+    // Leer cabecera
+    char cabecera[6];
+    fread(cabecera, sizeof(char), 5, arch);
+    cabecera[5] = '\0';
+    if (strcmp(cabecera, "VMI25") != 0) {
+        fprintf(stderr, "Error: Formato de archivo VMI no valido: %s\n", nombreArchivo);
+        fclose(arch);
+        exit(EXIT_FAILURE);
+    }
+
+    // Leer tamaño de memoria
+    unsigned int memSizeLE;
+    fread(&memSizeLE, sizeof(unsigned int), 1, arch);
+    mv->memSize = ((memSizeLE & 0xFF00) >> 8) | ((memSizeLE & 0x00FF) << 8);
+
+    // Leer registros de la MV
+    for (int i = 0; i < MAX_REG; i++) {
+        unsigned int regLE;
+        fread(&regLE, sizeof(unsigned int), 1, arch);
+        mv->registros[i] = ((regLE & 0xFF00FF00) >> 8) | ((regLE & 0x00FF00FF) << 8);
+    }
+
+    // Leer entradas de la tabla descriptora de segmentos
+    for (int i = 0; i < MAX_SEG; i++) {
+        for (int j = 0; j < 2; j++) {
+            unsigned int entradaLE;
+            fread(&entradaLE, sizeof(unsigned int), 1, arch);
+            mv->tablaSegmentos[i][j] = ((entradaLE & 0xFF00FF00) >> 8) | ((entradaLE & 0x00FF00FF) << 8);
+        }
+    }
+
+    // Leer contenido de la memoria
+    fread(mv->memoria, sizeof(unsigned char), mv->memoriaUsada, arch);
+
+    fclose(arch);
+}
+//--------------------------Fin uso de .vmi-----------------------------//
+
+
+/* para refactorizar y encapsular mejor mas tarde
+void leerMemoria(maquinaVirtual *mv, int direccion, unsigned char *valor) {
+    int dirF = logicoAFisico(mv, direccion); //convertir direccion logica a fisica
+    *valor = mv->memoria[dirF];
+}
+
+void escribirMemoria(maquinaVirtual *mv, int direccion, unsigned char valor) {
+    int dirF = logicoAFisico(mv, direccion); //convertir direccion logica a fisica
+    mv->memoria[dirF] = valor;
+}
+*/
 

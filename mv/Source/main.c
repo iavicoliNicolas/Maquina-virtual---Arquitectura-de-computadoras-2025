@@ -44,14 +44,15 @@ int main(int argc, char *argv[]) {
             parametros = 1;
 
         }*/
-       //agrega Euge
+       
         if (strcmp(argv[i], "-p") == 0) {
             parametros = 1;
             indiceParametros = i + 1;  // guardo posicion del primer parametro, para saber que a partir de aca solo hay parametros que se guardan en el param segment
           break;                     //  el resto son parametros, corto aca
 
         }
-        //fin agrega Euge
+        
+        //si hay parametro de memoria, sobreescribo el tamaño
         if (strncmp(argv[i], "-m", 2) == 0) {
             mv.memSize = atoi(&argv[i][2]);
         }
@@ -96,10 +97,10 @@ int main(int argc, char *argv[]) {
         if ((i+1) % 16 == 0)
            printf("\n");
       }
-      //fin borrar
-    printf("\nTamano Param Segment: %d bytes\n", paramSize);//para verificar funcionamiento---------------------------->borrar
+
+      printf("\nTamano Param Segment: %d bytes\n", paramSize);//para verificar funcionamiento---------------------------->borrar
     }
-    //Fin Agrega EUge
+
     FILE* archivo = fopen(vmx_file, "rb");
 
     if (!verificarIntegridadVMX(archivo)) {
@@ -109,7 +110,6 @@ int main(int argc, char *argv[]) {
 
     printf("\nHello maquina virtual\n");
 
-    /*Cometa Euge: leerMV(&mv, archivo, &version); // carga el archivo vmx en la memoria de la MV*/
     leerMV(&mv, archivo, &version, paramSize);// carga el archivo vmx en la memoria de la MV //Cambio: agregue el paramsize. Al pasar paramSize, estas garantizando que cada segmento del VMX se carga en memoria sin superponerse con los parametros.
     //printf("Version del archivo: %d\n", version);
     fclose(archivo);
@@ -120,7 +120,7 @@ int main(int argc, char *argv[]) {
         disassembler(mv);
     }
 
-    ejecutarMV(&mv, version);     // solo ejecuta la MV
+    ejecutarMV(&mv, version);     // ejecuta la MV
 
     printf("\nFIN MAQUINA VIRTUAL\n");
 
