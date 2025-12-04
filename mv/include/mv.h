@@ -67,5 +67,8 @@ static inline unsigned char leePos(char *mem, int pos);
 void leerInstruccion(maquinaVirtual *mv, unsigned char *operacion, operando *operandos);
 void ejecutarMV(maquinaVirtual *mv, int version);
 int logicoAFisico(maquinaVirtual *mv, int direccionLogica);
+
+void leeVMI(maquinaVirtual *mv, const char *nombreArchivo);
+void escribeVMI(maquinaVirtual *mv, const char *nombreArchivo);
 #endif // MV_H
 

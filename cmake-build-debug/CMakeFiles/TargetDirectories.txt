@@ -1,0 +1,3 @@
+C:/Users/nico/CLionProjects/Maquina-virtual---Arquitectura-de-computadoras-2025/cmake-build-debug/CMakeFiles/mv2025.dir
+C:/Users/nico/CLionProjects/Maquina-virtual---Arquitectura-de-computadoras-2025/cmake-build-debug/CMakeFiles/edit_cache.dir
+C:/Users/nico/CLionProjects/Maquina-virtual---Arquitectura-de-computadoras-2025/cmake-build-debug/CMakeFiles/rebuild_cache.dir

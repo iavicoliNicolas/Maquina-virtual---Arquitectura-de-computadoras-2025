@@ -1,0 +1,9 @@
+# ninja log v6
+25	90	7865361281754445	CMakeFiles/mv2025.dir/mv/tests/test.c.obj	dd99e88a5904a982
+10	124	7865361281593028	CMakeFiles/mv2025.dir/mv/Source/main.c.obj	e7cce0c298bed760
+21	131	7865361281714450	CMakeFiles/mv2025.dir/mv/Source/paramsegment.c.obj	ee56dfc0ca44db9a
+2	132	7865361281511744	CMakeFiles/mv2025.dir/mv/Source/disassembler.c.obj	380683cb84e28203
+17	139	7865361281673729	CMakeFiles/mv2025.dir/mv/Source/operando.c.obj	1e4dd9761545c92d
+13	144	7865361281633056	CMakeFiles/mv2025.dir/mv/Source/mv.c.obj	7e502ceacc4f2433
+6	162	7865361281562366	CMakeFiles/mv2025.dir/mv/Source/funciones.c.obj	f2e7bf922e0ab3d0
+162	253	7865361283113608	vmx.exe	a6be5576ff0e19bf

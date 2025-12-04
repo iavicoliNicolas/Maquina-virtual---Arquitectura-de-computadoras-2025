@@ -7,7 +7,7 @@
 int getReg(maquinaVirtual *mv, int op) {
     //extraer registro de op
     int num;
-    int reg = op & 0x05;
+    int reg = op & 0x01F;
     int seccion = (op >> 6) & 0x00000003;
 
     //comprobar que el registro es valido

@@ -1,11 +1,10 @@
-cmake_minimum_required(VERSION 4.0)
-project(Maquina_virtual___Arquitectura_de_computadoras_2025 C)
+cmake_minimum_required(VERSION 3.16)
+project(mv2025 C)    # ← nombre interno más corto
 
 set(CMAKE_C_STANDARD 11)
-
 include_directories(mv/include)
 
-add_executable(Maquina_virtual___Arquitectura_de_computadoras_2025
+add_executable(mv2025
         mv/include/disassembler.h
         mv/include/funciones.h
         mv/include/mv.h
@@ -18,3 +17,6 @@ add_executable(Maquina_virtual___Arquitectura_de_computadoras_2025
         mv/Source/operando.c
         mv/Source/paramsegment.c
         mv/tests/test.c)
+
+set_target_properties(mv2025 PROPERTIES OUTPUT_NAME "vmx")
+set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_SOURCE_DIR})
