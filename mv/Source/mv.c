@@ -259,7 +259,7 @@ void ejecutarMV(maquinaVirtual *mv, int version) {
     Toperaciones v[32];
     cargaVF(v);
 
-    funcionSys vecLlamadas[6];
+    funcionSys vecLlamadas[0xF];
     loadSYSOperationArray(vecLlamadas);
 
     int posCS = (mv->registros[CS] >> 16) & 0xFFFF, condicion;
@@ -292,9 +292,9 @@ void ejecutarMV(maquinaVirtual *mv, int version) {
         op[1] = mv->registros[OP2];
 
         switch ( version ) {
-            case 1: condicion = ( 0x10 < operacion && operacion < 0x1F ) || (0x00 < operacion && operacion < 0x08) || ( operacion == 0x0F);
+            case 1: condicion = ( 0x10 <= operacion && operacion <= 0x1F ) || (0x00 <= operacion && operacion <= 0x08) || ( operacion == 0x0F);
                 break;
-            case 2: condicion = ( 0x10 < operacion && operacion < 0x1F ) || (0x00 < operacion && operacion < 0x08) || ( operacion == 0x0F) || ( operacion == 0x0E ) || ( 0x0B < operacion && operacion < 0x0D);
+            case 2: condicion = ( 0x10 <= operacion && operacion <= 0x1F ) || (0x00 <= operacion && operacion <= 0x08) || ( operacion == 0x0F) || ( operacion == 0x0E ) || ( 0x0B <= operacion && operacion <= 0x0D);
                 break;
         }
 

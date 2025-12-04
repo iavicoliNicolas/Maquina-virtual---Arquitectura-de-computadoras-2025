@@ -58,6 +58,10 @@ void STOP(maquinaVirtual *mv, int *op);
 //funciones de la llamada sys
 void readSys(maquinaVirtual *mv,int aux);
 void writeSys(maquinaVirtual *mv,int aux);
+void readStringSys(maquinaVirtual *mv, int arg);
+void writeStringSys(maquinaVirtual *mv, int arg);
+void breakPointSys(maquinaVirtual *mv, int arg);
+void clearScreenSys(maquinaVirtual *mv, int arg);
 
 void ejecutarOperacion(maquinaVirtual *mv, int codigo, operando *op);
 #endif // FUNCIOONES_H

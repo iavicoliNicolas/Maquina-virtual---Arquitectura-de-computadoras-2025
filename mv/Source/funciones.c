@@ -43,6 +43,18 @@ void loadSYSOperationArray(funcionSys *vecLlamadas){
     vecLlamadas[0] = NULL; //no hay operacion 0
     vecLlamadas[1] = readSys;
     vecLlamadas[2] = writeSys;
+    vecLlamadas[3] = readStringSys;  // STRING READ
+    vecLlamadas[4] = writeStringSys; // STRING WRITE
+
+    vecLlamadas[5] = NULL;
+    vecLlamadas[6] = NULL;
+
+    vecLlamadas[7] = clearScreenSys; // CLEAR SCREEN
+
+    vecLlamadas[8] = NULL;
+    vecLlamadas[9] = NULL;
+
+    vecLlamadas[0x0F] = breakPointSys; // BREAKPOINT (F)
 }
 
 void setLAR(maquinaVirtual *mv, int dirL) {
@@ -170,7 +182,7 @@ void SYS(maquinaVirtual *mv, int *op) {
     // Obtener el número de syscall del operando inmediato
     int llamada = getOp(mv, op[0]); // Asumo que getOp devuelve el número
 
-    funcionSys vecLlamadas[3];
+    funcionSys vecLlamadas[6];
     loadSYSOperationArray(vecLlamadas);
 
     if (llamada >= 1 && llamada <= 2) {
@@ -492,7 +504,7 @@ void writeSys(maquinaVirtual *mv, int arg) {
 
 //------------------- Implementación de nuevas funciones Sys ------------------//
 
-void readStringSys(maquinaVirtual *mv){
+void readStringSys(maquinaVirtual *mv, int arg){
 
     char* st;
     int i = 0;
