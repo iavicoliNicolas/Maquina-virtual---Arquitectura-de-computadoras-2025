@@ -80,24 +80,28 @@ void setRegOP(maquinaVirtual *mv, int reg, operando valor, int tipo) {
     }
 }
 
-void setCC(maquinaVirtual *mv, int numero) {
-    int cc = mv->registros[17];
+void setCC(maquinaVirtual *mv, int resultado) {
+    // Limpiar registro CC completamente
+    mv->registros[CC] = 0;
 
-    // limpiar bits N (31) y Z (30)
-    cc &= 0x3FFFFFFF;   // 0011 1111 1111 1111 1111 1111 1111 1111
-
-    if (numero == 0) {
-        cc |= 0x40000000;  // bit Z = 1
+    if (resultado == 0) {
+        // Bit Z (30) = 1
+        mv->registros[CC] |= (1 << 30);
     }
-    else if (numero < 0) {
-        cc |= 0x80000000;  // bit N = 1
+    else if (resultado < 0) {
+        // Bit N (31) = 1
+        mv->registros[CC] |= (1 << 31);
     }
-    // si numero > 0 → N=0, Z=0 (no se marca nada)
-
-    mv->registros[17] = cc;
+    // resultado > 0: ambos bits en 0
 }
 
+int getN(maquinaVirtual *mv) {
+    return (mv->registros[CC] >> 31) & 1;  // Bit 31
+}
 
+int getZ(maquinaVirtual *mv) {
+    return (mv->registros[CC] >> 30) & 1;  // Bit 30
+}
 
 //funciones assembler
 void MOV(maquinaVirtual *mv, int *op){
@@ -177,36 +181,48 @@ void SYS(maquinaVirtual *mv, int *op) {
     }
 }
 
-void JMP(maquinaVirtual *mv, int *op){
+void JMP(maquinaVirtual *mv, int *op) {
     mv->registros[IP] = getOp(mv, op[0]);
 }
-void JZ(maquinaVirtual *mv, int *op){
-    if (mv->registros[CC] == 0) {
+
+void JZ(maquinaVirtual *mv, int *op) {
+
+    if (getN(mv) == 0 && getZ(mv) == 1) {
         mv->registros[IP] = getOp(mv, op[0]);
     }
 }
-void JP(maquinaVirtual *mv, int *op){
-    if (mv->registros[CC] > 0) {
+
+void JP(maquinaVirtual *mv, int *op) {
+
+    if (getN(mv) == 0 && getZ(mv) == 0) {
         mv->registros[IP] = getOp(mv, op[0]);
     }
 }
-void JN(maquinaVirtual *mv, int *op){
-    if (mv->registros[CC] < 0) {
+
+void JN(maquinaVirtual *mv, int *op) {
+
+    if (getN(mv) == 1 && getZ(mv) == 0) {
         mv->registros[IP] = getOp(mv, op[0]);
     }
 }
-void JNZ(maquinaVirtual *mv, int *op){
-    if (mv->registros[CC] != 0) {
+
+void JNZ(maquinaVirtual *mv, int *op) {
+
+    if (getZ(mv) == 0) {  // Cualquier cosa menos cero
         mv->registros[IP] = getOp(mv, op[0]);
     }
 }
-void JNP(maquinaVirtual *mv, int *op){
-    if (mv->registros[CC] >= 0) {
+
+void JNP(maquinaVirtual *mv, int *op) {
+
+    if (getN(mv) == 1 || getZ(mv) == 1) {
         mv->registros[IP] = getOp(mv, op[0]);
     }
 }
-void JNN(maquinaVirtual *mv, int *op){
-    if (mv->registros[CC] <= 0) {
+
+void JNN(maquinaVirtual *mv, int *op) {
+
+    if (getN(mv) == 0) {
         mv->registros[IP] = getOp(mv, op[0]);
     }
 }
