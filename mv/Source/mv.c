@@ -262,10 +262,12 @@ void ejecutarMV(maquinaVirtual *mv, int version) {
     funcionSys vecLlamadas[6];
     loadSYSOperationArray(vecLlamadas);
 
+    int posCS = (mv->registros[CS] >> 16) & 0xFFFF, condicion;
+
     //Ciclo de ejecucion
     printf("\n=== INICIO EJECUCION MAQUINA VIRTUAL ===\n");
-    //muestraCS(*mv);
-    while( mv->registros[IP] < mv->tablaSegmentos[0][1] && mv->registros[IP] >= 0) //mientras IP < limite del segmento de codigo
+
+    while( mv->registros[IP] < mv->tablaSegmentos[posCS][1] && mv->registros[IP] >= 0) //mientras IP < limite del segmento de codigo
     {
         printf("\n=============Ciclo================\n");
         printf("\n--- Ejecucion de instruccion en IP=0x%04X ---\n", mv->registros[IP]);
@@ -277,15 +279,10 @@ void ejecutarMV(maquinaVirtual *mv, int version) {
 
         //Recuperar los operandos de la instruccion y almacenarlos en el arreglo operandos
         recuperaOperandos(mv, operandos, mv->registros[IP]);
-        printf("Operacion: %d ", operacion);
-        printf("Operando 1: Tipo=%d, Registro=%d, Desplazamiento=%d ", operandos[0].tipo, operandos[0].registro, operandos[0].desplazamiento);
-        printf("Operando 2: Tipo=%d, Registro=%d, Desplazamiento=%d\n", operandos[1].tipo, operandos[1].registro, operandos[1].desplazamiento);
 
         //Guardar en los registros OP1 y OP2 los operandos de la instruccion
         setRegOP(mv, OP1, operandos[0], operandos[0].tipo);
         setRegOP(mv, OP2, operandos[1], operandos[1].tipo);
-        //printf("op1 y op2 cargados en registros OP1 y OP2\n");
-        //printf("OP1: 0x%08X, OP2: 0x%08X\n", mv->registros[OP1], mv->registros[OP2]);
 
         //Ubicar en el registro IP la proxima instruccion a ejecutar
         setReg(mv, IP, mv->registros[IP] + 1 + operandos[0].tipo + operandos[1].tipo);
@@ -294,17 +291,49 @@ void ejecutarMV(maquinaVirtual *mv, int version) {
         op[0] = mv->registros[OP1];
         op[1] = mv->registros[OP2];
 
-        if (operacion < 0 || operacion >= 32) {
+        switch ( version ) {
+            case 1: condicion = ( 0x10 < operacion && operacion < 0x1F ) || (0x00 < operacion && operacion < 0x08) || ( operacion == 0x0F);
+                break;
+            case 2: condicion = ( 0x10 < operacion && operacion < 0x1F ) || (0x00 < operacion && operacion < 0x08) || ( operacion == 0x0F) || ( operacion == 0x0E ) || ( 0x0B < operacion && operacion < 0x0D);
+                break;
+        }
+
+        if ( ! condicion ) {
+
             fprintf(stderr, "Error: Operacion invalida: %d\n", operacion);
             exit(EXIT_FAILURE);
         } else {
+
             //ejecutar la operacion
-            //printf("Ejecutando operacion %d\n", (int)operacion);
             v[operacion](mv, op);
         }
-        printf("Registros despues de la operacion:\n");
-        printf("EAX: 0x%08X, EBX: 0x%08X, ECX: 0x%08X, EDX: 0x%08X\n", mv->registros[EAX], mv->registros[EBX], mv->registros[ECX], mv->registros[EDX]);
-        scanf("%*c"); //espera a que el usuario presione enter para continuar
+        //DEBUG: Mostrar estado mínimo
+
+        //Mostrar instrucción (opcional, solo si -d flag)
+        const char* mnemonic = mnemonicos[operacion];
+        printf("%s ", mnemonic ? mnemonic : "???");
+        if (operandos[0].tipo != 0) {
+            imprimeOperando(operandos[0]);
+            if (operandos[1].tipo != 0) {
+                printf(", ");
+                imprimeOperando(operandos[1]);
+            }
+        }
+        printf("\n");
+
+        printf("\nIP=0x%08X | ", mv->registros[IP]);
+
+        // Mostrar LAR/MAR/MBR solo si tienen valores de acceso previo
+        if (mv->registros[LAR] != 0) {
+            printf("LAR=0x%08X ", mv->registros[LAR]);
+        }
+        if (mv->registros[MAR] != 0) {
+            printf("MAR=0x%08X ", mv->registros[MAR]);
+        }
+        if (mv->registros[MBR] != 0) {
+            printf("MBR=0x%08X ", mv->registros[MBR]);
+        }
+        printf("\n");
     }
     printf("\nEjecucion finalizada\n");
 }
