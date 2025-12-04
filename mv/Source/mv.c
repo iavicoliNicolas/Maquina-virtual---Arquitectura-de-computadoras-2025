@@ -46,21 +46,15 @@ void setReg(maquinaVirtual *mv, int reg, int valor) {
 
 //----------------------------Funciones principal de lectura de la MV-----------------------------//
 
-/*void leerMV(maquinaVirtual *mv, FILE* arch, int *version) {*/
-// CAMBIO: agrego offsetInicial (para respetar el Param Segment si existe)
 void leerMV(maquinaVirtual *mv, FILE* arch, int *version, int paramSize) {
     char cabecera[6];
-    unsigned short int tamano_codigo, constantes, longitudSeg[5], offset,offsetInicial;
-    int i, totalLongitud = 0;
-    int ultSegmento = 0;
-    int ordenSegmento[6] = {PS,KS,CS,DS,ES,SS};
+    unsigned short int tamano_codigo, entry_point = 0;
+    unsigned short int longitudSeg[6]; // Ahora 6: Code, Data, Extra, Stack, Const, Entry
 
-
-    // 1. Leer cabecera del archivo VMX
+    // 1. Leer identificador
     fread(cabecera, sizeof(char), 5, arch);
-    cabecera[5] = '\0'; // Null-terminate para comparación
+    cabecera[5] = '\0';
 
-    // Verificar identificador "VMX25"
     if (strcmp(cabecera, "VMX25") != 0) {
         fprintf(stderr, "Error: Formato de archivo invalido\n");
         exit(EXIT_FAILURE);
@@ -68,129 +62,178 @@ void leerMV(maquinaVirtual *mv, FILE* arch, int *version, int paramSize) {
 
     // 2. Leer versión
     fread(version, sizeof(unsigned char), 1, arch);
-    if ( (*version) != 1 && (*version) != 2 ) {
-        fprintf(stderr, "Error: Versión no soportada: %d\n", *version);
-        exit(EXIT_FAILURE);
-    }
-   printf("DEBUG: version leída = %d\n", *version); //---------->BORRAR
-    // 3. Leer tamaño del segmento de código (2 bytes, little-endian)
-    fread(&tamano_codigo, sizeof(unsigned short int), 1, arch);
-    tamano_codigo = corrigeSize(tamano_codigo);
 
-
-    // Inicializar registros
-    for (i = 0; i < 32; i++) {
+    // 3. Inicializar registros
+    for (int i = 0; i < 32; i++) {
         mv->registros[i] = 0;
     }
 
-    // bloque de versiones
-    switch (*version)
-    {
-        case 1: // Código específico para la versión 1
-
-            // 3. Leer tamaño del segmento de código (2 bytes, little-endian)
-            fread(&tamano_codigo, sizeof(unsigned short int), 1, arch);
-            tamano_codigo = corrigeSize(tamano_codigo);
-
-            // 4. Verificar que el código cabe en memoria
-            if (tamano_codigo > MAX_MEM) {
-                fprintf(stderr, "Error: Codigo demasiado grande (%d bytes)\n", tamano_codigo);
-                exit(EXIT_FAILURE);
-            }
-
-            // 5. Cargar código en memoria (segmento de código)
-            fread(mv->memoria, sizeof(char), tamano_codigo, arch);
-
-            // 6. Inicializar tabla de descriptores de segmentos
-            mv->tablaSegmentos[0][0] = 0;                     // Base = 0
-            mv->tablaSegmentos[0][1] = tamano_codigo;         // Tamaño del código
-
-            mv->tablaSegmentos[1][0] = tamano_codigo;         // Base = fin del código
-            mv->tablaSegmentos[1][1] = 16384 - tamano_codigo; // Tamaño de datos
-            // Las demás entradas (2-7) se inicializan a 0
-
-            ultSegmento = 1;
-            // Inicializar registros especiales
-
-            mv->registros[CS] = 0x00000000;  // CS: segmento de c digo (tabla entrada 0)
-            mv->registros[DS] = 0x00010000;  // DS: segmento de datos (tabla entrada 1)
-
-            printf("Programa cargado: %d bytes de codigo\n", tamano_codigo);
-            break;
-
-        case 2: // Código específico para la versión 2
-
-            fread(longitudSeg, sizeof(unsigned short int), 5, arch);
-            for ( i = 0; i < 5; i++ )
-            {
-                longitudSeg[i] = corrigeSize(longitudSeg[i]);
-                if (longitudSeg[i] > 0)
-                {
-                    totalLongitud += longitudSeg[i];
-                    ultSegmento = i;
-
-                    /*comenta Euge:mv->tablaSegmentos[i][0] = (i == 0) ? 0 : mv->tablaSegmentos[i-1][0] + longitudSeg[i-1];*/
-                    //agrega Euge
-                    ////offsetInicial para definir la base del primer segmento
-                    mv->tablaSegmentos[i][0] = (i == 0)
-                        ? offsetInicial
-                        : mv->tablaSegmentos[i-1][0] + longitudSeg[i-1];
-                    //fin agrega Euge
-
-                    mv->tablaSegmentos[i][1] = longitudSeg[i];
-
-                    // Asignar el valor del registro correspondiente
-                    mv->registros[ordenSegmento[i]] = mv->tablaSegmentos[i][0] << 16; // Desplazar a la parte alta
-                    printf("Registro %d asignado a: 0x%08X\n", ordenSegmento[i], mv->registros[ordenSegmento[i]]);
-
-                    if ( i == 0 ) {
-                        tamano_codigo = longitudSeg[i];
-                    } else if ( i == 4) {
-                        constantes = longitudSeg[i];
-                    }
-
-                } else {
-                    mv->registros[ordenSegmento[i+1]] = -1; // Si el segmento no existe, el registro apunta a 0
-                }
-            }
-            /*Comenta Euge: if ( totalLongitud > mv->memSize ) {
-                fprintf(stderr, "Error: Código demasiado grande, la maquina virtual requiere mas longitud de memoria (%d bytes)\n", totalLongitud);
-                exit(EXIT_FAILURE);
-            } else {
-                // leo segmento de codigo del archivo
-                fread(mv->memoria, sizeof(char), tamano_codigo ,arch);
-                // leo segmento de constantes del archivo
-                fread(&mv->memoria[tamano_codigo], sizeof(char), constantes ,arch);
-            }  */
-           //// Agrega Euge
-            //  Control de memoria total considerando el Param Segment
-            if (totalLongitud + offsetInicial > mv->memSize) {
-                fprintf(stderr, "Error: Memoria insuficiente. Se requieren %d bytes.\n", totalLongitud + offsetInicial);
-                exit(EXIT_FAILURE);
-            } else {
-                fread(&mv->memoria[mv->tablaSegmentos[0][0]], sizeof(char), tamano_codigo, arch);
-                fread(&mv->memoria[mv->tablaSegmentos[4][0]], sizeof(char), constantes, arch);
-            }
-
-            ////Salida de prueba borra
-            printf("Const Segment cargado en [%d..%d), tamaño %d bytes\n",
-            mv->tablaSegmentos[4][0],
-             mv->tablaSegmentos[4][0] + mv->tablaSegmentos[4][1],
-             constantes);
-            //fin "borrar"
-           ////   Fin Agrega
-            break;
-        default:
-            break;
-        }
-
-    for ( i = ultSegmento+1; i < 8; i++) {
-        for (int j = 0; j < 2; j++)
-            mv->tablaSegmentos[i][j] = -1;
+    // 4. Inicializar tabla de segmentos (todo inválido)
+    for (int i = 0; i < 8; i++) {
+        mv->tablaSegmentos[i][0] = -1;
+        mv->tablaSegmentos[i][1] = 0;
     }
 
-    mv->registros[IP] = mv->registros[CS]; // Inicializar IP al inicio del segmento de código
-    mv->registros[CC] = 0;                  // Condition Code inicial
+    // 5. Manejar según versión
+    if (*version == 1) {
+        /*********************** VERSIÓN 1 ***********************/
+
+        // Leer tamaño del código
+        fread(&tamano_codigo, sizeof(unsigned short int), 1, arch);
+        tamano_codigo = corrigeSize(tamano_codigo);
+
+        // Verificar que cabe en memoria
+        if (tamano_codigo > mv->memSize) {
+            fprintf(stderr, "Error: Codigo demasiado grande (%d bytes)\n", tamano_codigo);
+            exit(EXIT_FAILURE);
+        }
+
+        // Cargar código en memoria (segmento de código)
+        fread(mv->memoria, sizeof(char), tamano_codigo, arch);
+
+        // Configurar tabla de segmentos
+        mv->tablaSegmentos[0][0] = 0;                     // Base = 0
+        mv->tablaSegmentos[0][1] = tamano_codigo;         // Tamaño del código
+
+        mv->tablaSegmentos[1][0] = tamano_codigo;         // Base = fin del código
+        mv->tablaSegmentos[1][1] = mv->memSize - tamano_codigo; // Tamaño de datos
+
+        // Configurar registros
+        mv->registros[CS] = 0x00000000;  // Segmento 0, offset 0
+        mv->registros[DS] = 0x00010000;  // Segmento 1, offset 0
+        mv->registros[ES] = 0xFFFFFFFF;  // No existe
+        mv->registros[SS] = 0xFFFFFFFF;  // No existe
+        mv->registros[KS] = 0xFFFFFFFF;  // No existe
+        mv->registros[PS] = 0xFFFFFFFF;  // No existe
+
+        // Inicializar IP al inicio del Code Segment
+        mv->registros[IP] = mv->registros[CS];
+
+        printf("MV1 cargado: %d bytes de codigo\n", tamano_codigo);
+
+    } else if (*version == 2) {
+        /*********************** VERSIÓN 2 ***********************/
+
+        // Leer todos los tamaños (6 valores: Code, Data, Extra, Stack, Const, Entry)
+        fread(longitudSeg, sizeof(unsigned short int), 6, arch);
+        for (int i = 0; i < 6; i++) {
+            longitudSeg[i] = corrigeSize(longitudSeg[i]);
+        }
+
+        // Tamaños individuales
+        unsigned short int code_size = longitudSeg[0];
+        unsigned short int data_size = longitudSeg[1];
+        unsigned short int extra_size = longitudSeg[2];
+        unsigned short int stack_size = longitudSeg[3];
+        unsigned short int const_size = longitudSeg[4];
+        entry_point = longitudSeg[5];  // Offset dentro del Code Segment
+
+        // Calcular offset inicial (Param Segment si existe)
+        int offset_actual = (paramSize > 0) ? paramSize : 0;
+        int idx_tabla = 0;  // Índice actual en tabla de segmentos
+
+        // 5.1. Param Segment (si existe)
+        if (paramSize > 0) {
+            mv->tablaSegmentos[idx_tabla][0] = 0;
+            mv->tablaSegmentos[idx_tabla][1] = paramSize;
+            mv->registros[PS] = (idx_tabla << 16);  // Índice en bits altos
+            idx_tabla++;
+        } else {
+            mv->registros[PS] = 0xFFFFFFFF;
+        }
+
+        // 5.2. Const Segment (si existe)
+        if (const_size > 0) {
+            mv->tablaSegmentos[idx_tabla][0] = offset_actual;
+            mv->tablaSegmentos[idx_tabla][1] = const_size;
+            mv->registros[KS] = (idx_tabla << 16);
+            offset_actual += const_size;
+            idx_tabla++;
+        } else {
+            mv->registros[KS] = 0xFFFFFFFF;
+        }
+
+        // 5.3. Code Segment (SIEMPRE existe)
+        mv->tablaSegmentos[idx_tabla][0] = offset_actual;
+        mv->tablaSegmentos[idx_tabla][1] = code_size;
+        mv->registros[CS] = (idx_tabla << 16);
+        offset_actual += code_size;
+        idx_tabla++;
+
+        // 5.4. Data Segment (si existe)
+        if (data_size > 0) {
+            mv->tablaSegmentos[idx_tabla][0] = offset_actual;
+            mv->tablaSegmentos[idx_tabla][1] = data_size;
+            mv->registros[DS] = (idx_tabla << 16);
+            offset_actual += data_size;
+            idx_tabla++;
+        } else {
+            mv->registros[DS] = 0xFFFFFFFF;
+        }
+
+        // 5.5. Extra Segment (si existe)
+        if (extra_size > 0) {
+            mv->tablaSegmentos[idx_tabla][0] = offset_actual;
+            mv->tablaSegmentos[idx_tabla][1] = extra_size;
+            mv->registros[ES] = (idx_tabla << 16);
+            offset_actual += extra_size;
+            idx_tabla++;
+        } else {
+            mv->registros[ES] = 0xFFFFFFFF;
+        }
+
+        // 5.6. Stack Segment (si existe)
+        if (stack_size > 0) {
+            mv->tablaSegmentos[idx_tabla][0] = offset_actual;
+            mv->tablaSegmentos[idx_tabla][1] = stack_size;
+            mv->registros[SS] = (idx_tabla << 16);
+            offset_actual += stack_size;
+            idx_tabla++;
+
+            // Inicializar SP: tope de la pila (base + tamaño)
+            mv->registros[SP] = mv->tablaSegmentos[idx_tabla-1][0] + stack_size;
+        } else {
+            mv->registros[SS] = 0xFFFFFFFF;
+            mv->registros[SP] = 0xFFFFFFFF;
+        }
+
+        // Verificar que todo cabe en memoria
+        if (offset_actual > mv->memSize) {
+            fprintf(stderr, "Error: Memoria insuficiente. Necesario: %d, Disponible: %d\n",
+                    offset_actual, mv->memSize);
+            exit(EXIT_FAILURE);
+        }
+
+        // CARGAR CONTENIDOS DESDE ARCHIVO
+
+        // 5.7. Cargar Code Segment
+        fread(&mv->memoria[mv->tablaSegmentos[idx_tabla-1][0]],
+              sizeof(char), code_size, arch);
+
+        // 5.8. Cargar Const Segment (si existe)
+        if (const_size > 0) {
+            // Buscar índice del Const Segment en la tabla
+            int idx_const = (paramSize > 0) ? 1 : 0;
+            fread(&mv->memoria[mv->tablaSegmentos[idx_const][0]],
+                  sizeof(char), const_size, arch);
+        }
+
+        // 5.9. Configurar IP con entry point
+        mv->registros[IP] = mv->registros[CS] | entry_point;
+
+        printf("MV2 cargado: Code=%d, Data=%d, Const=%d, Entry=0x%04X\n",
+               code_size, data_size, const_size, entry_point);
+
+    } else {
+        fprintf(stderr, "Error: Versión no soportada: %d\n", *version);
+        exit(EXIT_FAILURE);
+    }
+
+    // Inicializar Condition Code
+    mv->registros[CC] = 0;
+
+    // Inicializar BP (no requiere valor inicial específico)
+    mv->registros[BP] = 0;
 }
 
 //-------------------------Funciones de la ejecucion de la MV-------------------------//
