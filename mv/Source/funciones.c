@@ -80,15 +80,23 @@ void setRegOP(maquinaVirtual *mv, int reg, operando valor, int tipo) {
     }
 }
 
-void setCC(maquinaVirtual *mv, int resultado) {
-    if (resultado == 0) {
-        mv->registros[CC] = 0b0100000000000000; // Cero
-    } else if (resultado > 0) {
-        mv->registros[CC] = 0b0000000000000000; // Positivo
-    } else {
-        mv->registros[CC] = 0b1000000000000000; // Negativo
+void setCC(maquinaVirtual *mv, int numero) {
+    int cc = mv->registros[17];
+
+    // limpiar bits N (31) y Z (30)
+    cc &= 0x3FFFFFFF;   // 0011 1111 1111 1111 1111 1111 1111 1111
+
+    if (numero == 0) {
+        cc |= 0x40000000;  // bit Z = 1
     }
+    else if (numero < 0) {
+        cc |= 0x80000000;  // bit N = 1
+    }
+    // si numero > 0 → N=0, Z=0 (no se marca nada)
+
+    mv->registros[17] = cc;
 }
+
 
 
 //funciones assembler

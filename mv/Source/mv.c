@@ -324,7 +324,9 @@ void escribeVMI(maquinaVirtual *mv, const char *nombreArchivo) {
 }
 
 void leeVMI(maquinaVirtual *mv, const char *nombreArchivo) {
+
     FILE *arch = fopen(nombreArchivo, "rb");
+
     if (arch == NULL) {
         fprintf(stderr, "Error: No se pudo abrir el archivo VMI: %s\n", nombreArchivo);
         exit(EXIT_FAILURE);

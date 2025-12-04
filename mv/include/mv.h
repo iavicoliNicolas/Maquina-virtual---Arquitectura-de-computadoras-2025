@@ -39,12 +39,15 @@
 
 
 typedef struct maquinaVirtual {
+
     unsigned short int header[5];
     int memSize;
     int memoriaUsada;
+
     unsigned char *memoria;
     int registros[MAX_REG];
     int tablaSegmentos[MAX_SEG][2];
+
 } maquinaVirtual;
 
 
