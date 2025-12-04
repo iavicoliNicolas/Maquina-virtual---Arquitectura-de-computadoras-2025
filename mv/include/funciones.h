@@ -63,5 +63,7 @@ void writeStringSys(maquinaVirtual *mv, int arg);
 void breakPointSys(maquinaVirtual *mv, int arg);
 void clearScreenSys(maquinaVirtual *mv, int arg);
 
+void generaArchivoDeImagen(maquinaVirtual *mv);
+
 void ejecutarOperacion(maquinaVirtual *mv, int codigo, operando *op);
 #endif // FUNCIOONES_H

@@ -62,6 +62,7 @@ int main(int argc, char *argv[]) {
             } else if (strcmp(ext, ".vmi") == 0) {
 
                 vmi_file = argv[i];
+                strcpy(mv.imagenArchivo,vmi_file);
                 tiene_vmi = 1;
 
             }

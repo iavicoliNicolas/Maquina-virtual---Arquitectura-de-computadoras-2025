@@ -541,11 +541,42 @@ void clearScreenSys(maquinaVirtual *mv, int arg){
     system("cls"); // En sistemas Windows
 }
 void breakPointSys(maquinaVirtual *mv, int arg) {
+    printf("\n*** BREAKPOINT ***\n");
 
-    
+    // 1. Generar archivo .vmi si existe en parámetros
+    // (asume que mv->nombre_vmi está configurado si se pasó -p archivo.vmi)
+
+    int seguir = 1;
+    char opcion;
+
+    while (seguir) {
+
+        printf("Pausado. Presiona:\n");
+        printf("  g + Enter para continuar\n");
+        printf("  q + Enter para salir\n");
+        printf("  Enter para paso a paso\n");
+
+        opcion = getchar();
+        if (opcion == 'g' || opcion == 'G') {
+
+            printf("Continuando...\n");
+            seguir = 0;
+
+        } else if (opcion == 'q' || opcion == 'Q') {
+            printf("Saliendo...\n");
+            escribeVMI(mv, mv->imagenArchivo);
+        }
+        else if (opcion == '\n') {
+
+            //ejecutarOperacion()
+        }
+        else {
+            printf("Presione una de las opciones correctas");
+        }
+    }
 }
 
-void generaArchivoDeImagen(maquinaVirtual mv) {
+void generaArchivoDeImagen(maquinaVirtual *mv) {
 
     FILE *arch;
     unsigned short int i, tamanio;

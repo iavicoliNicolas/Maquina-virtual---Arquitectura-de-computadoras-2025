@@ -48,6 +48,9 @@ typedef struct maquinaVirtual {
     int registros[MAX_REG];
     int tablaSegmentos[MAX_SEG][2];
 
+    char* imagenArchivo[16];
+
+
 } maquinaVirtual;
 
 
