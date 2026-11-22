@@ -3,8 +3,10 @@
 
 # Pin gcc, the compiler selected in mv/mv.cbp. GNU make's default CC is
 # `cc`, and Clang rejects the implicit `gets` declaration in funciones.c.
+# Newer GCC reports that same implicit declaration as an error; keep it a
+# warning so the uncalled helper still links.
 CC      := gcc
-CFLAGS  := -Wall -g -Imv/include
+CFLAGS  := -Wall -g -Wno-error=implicit-function-declaration -Imv/include
 
 SRCS := mv/Source/main.c \
         mv/Source/mv.c \

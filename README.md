@@ -2,7 +2,7 @@
 
 Teaching virtual machine for the Computer Architecture course (2025), written in C by Nicolás Iavicoli Dulcet with Eugenia and CamiSerafini. It loads a `VMX25` memory image, builds a 32-register machine with a segmented byte memory, optionally prints a disassembly, and then interprets the instruction stream.
 
-The sources compile with GCC. On the images shipped in this tree, the version-1 loader rejects the file before the first instruction runs. The [run section](#run) shows that transcript and why the size check fires.
+The sources compile with GCC. `examples/arith.vmx` is a five-byte version-1 program (`ADD LAR, 5`, then `STOP`). The [run section](#run) shows its disassembly and execution trace.
 
 ## What the program implements
 
@@ -55,7 +55,7 @@ The disassembler reads immediates and displacements as big-endian. `recuperaOper
 
 `ejecutarMV` advances IP by `1 + typeA + typeB` before the operation runs, then calls the function pointer for that opcode. After each instruction it prints EAX, EBX, ECX, and EDX and waits for Enter (`scanf("%*c")`). The loop continues while IP is greater than or equal to 0 and strictly less than the limit stored in segment-table entry 0. `STOP` calls `exit(0)`, so `main` does not reach its final printf when a program stops that way.
 
-`getOp` / `setOp` recover a value from the descriptor stored in OP1 or OP2 (type in the top byte). Register ids on that path are masked with `op & 0x05` inside `getReg`. A memory read sign-extends when bit 15 of the loaded value is set, including after a 4-byte read, and it updates LAR, MAR, and MBR. `setMAR` always records a size of 4. A memory write stores one byte at the index `getMem` just returned.
+`getOp` / `setOp` recover a value from the descriptor stored in OP1 or OP2 (type in the top byte). `getReg` uses `op & 0x05` as a register index and returns that register's current value; `getOp` and `setOp` then use the returned value as an index. Every register starts at 0, so the first write through LAR (index 0) stores into LAR. A memory read sign-extends when bit 15 of the loaded value is set, including after a 4-byte read, and it updates LAR, MAR, and MBR. `setMAR` always records a size of 4. A memory write stores one byte at the index `getMem` just returned.
 
 ### Instruction set
 
@@ -166,7 +166,9 @@ make
 
 The Makefile sets `CC` to `gcc`. GNU make's default is `cc`; on the machine where this was checked, `cc` is Clang 18.1.3, which treats the implicit `gets` declaration as an error and produces no binary.
 
-Checked on Linux with GCC 13.3.0: `make` exits 0. GCC prints warnings under `-Wall` (unused parameters, the implicit `gets` in the uncalled string helper, and `offsetInicial` may be used uninitialized on the version-2 path). The link still succeeds. `make clean` removes `build/`.
+`-Wno-error=implicit-function-declaration` keeps the implicit `gets` in the uncalled string helper as a warning. GCC 14 and later report that call as an error by default.
+
+Checked on Linux with GCC 13.3.0: `make` exits 0. GCC still prints warnings under `-Wall` (unused parameters, that `gets` call, and `offsetInicial` may be used uninitialized on the version-2 path). The link succeeds. `make clean` removes `build/`.
 
 ## Run
 
@@ -183,34 +185,40 @@ Checked on Linux with GCC 13.3.0: `make` exits 0. GCC prints warnings under `-Wa
 
 A `.vmx` path that `fopen` cannot open is still passed to `verificarIntegridadVMX`, which seeks on a null `FILE*` and the process dies with a segmentation fault. A lone `.vmi` path passes the suffix check, and `main` still calls `fopen` on the `.vmx` pointer, which was never set.
 
-### Sample: disassemble `sample(1).vmx`
+### Sample: `examples/arith.vmx`
 
-This is the Debug target's run line in `mv.cbp` (`sample(1).vmx -d`). Output from `./build/mv`, exit status 1:
+Five-byte version-1 program. LAR starts at 0, so `ADD LAR, 5` stores 5 in LAR. `STOP` (opcode 15) then ends the process. The image is `VMX25`, version byte 1, two 16-bit lengths (version 1 uses the second; both are `00 05`), then the code bytes `91 00 05 00 0F`.
+
+The executor waits for Enter after each instruction. This run passes one newline after the ADD. `STOP` calls `exit(0)` before its own wait, so the process status is 0 and the lines after the instruction call are not printed. The register line shows EAX–EDX, which this program leaves at 0.
 
 ```text
-$ ./build/mv "mv/bin/Debug/sample(1).vmx" -d
+$ printf '\n' | ./build/mv examples/arith.vmx -d
 
 Hello maquina virtual
 DEBUG: version leída = 1
-Error: Codigo demasiado grande (20507 bytes)
+Programa cargado: 5 bytes de codigo
+
+=== DESASSEMBLER ===
+>[0000] 91 00 05 00              |  ADD LAR , 5;
+ [0004] 0F                       |  STOP ;
+STOP 
+
+=== INICIO EJECUCION MAQUINA VIRTUAL ===
+
+=============Ciclo================
+
+--- Ejecucion de instruccion en IP=0x0000 ---
+Direccion logica: 0x00000000
+Operacion: 17 Operando 1: Tipo=1, Registro=0, Desplazamiento=-1 Operando 2: Tipo=2, Registro=-1, Desplazamiento=5
+Registros despues de la operacion:
+EAX: 0x00000000, EBX: 0x00000000, ECX: 0x00000000, EDX: 0x00000000
+
+=============Ciclo================
+
+--- Ejecucion de instruccion en IP=0x0004 ---
+Direccion logica: 0x00000004
+Operacion: 15 Operando 1: Tipo=0, Registro=-1, Desplazamiento=5 Operando 2: Tipo=0, Registro=-1, Desplazamiento=-1
 ```
-
-### Sample: parameter segment
-
-`./build/mv mv/bin/Debug/sample0.vmx -p hello world`, exit status 1:
-
-```text
-Creando Param Segment con 2 parámetros...
-68 65 6C 6C 6F 00 77 6F 72 6C 64 00 00 00 00 00 
-06 00 00 00 
-Tamano Param Segment: 20 bytes
-
-Hello maquina virtual
-DEBUG: version leída = 1
-Error: Codigo demasiado grande (36864 bytes)
-```
-
-The dump is the parameter segment: `hello\0`, `world\0`, then the 4-byte offsets `0` and `6`. The loader error comes next. On a version-1 image `leerMV` consumes the real size field before the switch, then treats the following instruction bytes as the size. In `sample0.vmx` those bytes are `90 00`, and `corrigeSize` turns them into 36864, which is above `MAX_MEM`. `sample(1).vmx` fails the same way with 20507. `-d` never runs on these files because the load exits first.
 
 ## Project structure
 
@@ -218,6 +226,7 @@ The dump is the parameter segment: `hello\0`, `world\0`, then the 4-byte offsets
 .
 ├── Makefile
 ├── README.md
+├── examples/arith.vmx        ADD LAR, 5 / STOP
 ├── .github/workflows/build.yml
 └── mv
     ├── mv.cbp                 Code::Blocks project
@@ -254,4 +263,4 @@ History on `main`, from the oldest commit (2 September 2025) through 4 December 
 
 ## Resumen
 
-Máquina virtual en C del curso de Arquitectura de Computadoras (2025), de Nicolás Iavicoli Dulcet, Eugenia (`Eugtoledo`) y CamiSerafini. Carga imágenes `VMX25` (versiones 1 y 2), con 32 registros, memoria segmentada de 8 segmentos, el juego de instrucciones de la tabla anterior, llamadas al sistema de lectura y escritura, un desensamblador (`-d`) y un segmento de parámetros (`-p`). Las rutinas de imagen `.vmi` están escritas y `main` no las llama. `make` compila con GCC. Las imágenes `.vmx` del repositorio se rechazan: el cargador de la versión 1 lee dos veces el tamaño, y el segundo campo supera los 16384 bytes.
+Máquina virtual en C del curso de Arquitectura de Computadoras (2025), de Nicolás Iavicoli Dulcet, Eugenia (`Eugtoledo`) y CamiSerafini. Carga imágenes `VMX25` (versiones 1 y 2), con 32 registros, memoria segmentada de 8 segmentos, el juego de instrucciones de la tabla anterior, llamadas al sistema de lectura y escritura, un desensamblador (`-d`) y un segmento de parámetros (`-p`). Las rutinas de imagen `.vmi` están escritas y `main` no las llama. `make` compila con GCC. `examples/arith.vmx` suma 5 en LAR y termina con `STOP`.
