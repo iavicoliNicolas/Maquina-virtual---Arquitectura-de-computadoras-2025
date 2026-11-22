@@ -9,6 +9,9 @@
 *.app
 *.out
 
+# Salida de `make` (build/mv)
+/build/
+
 # Archivos objeto y dependencias
 *.o
 *.obj
